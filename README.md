@@ -1,73 +1,184 @@
-# Welcome to your Lovable project
+# Pedro de Toledo Imóveis
 
-## Project info
+Site imobiliário moderno e responsivo desenvolvido com React, TypeScript e Tailwind CSS. Interface completa para busca de imóveis e painel administrativo.
 
-**URL**: https://lovable.dev/projects/f518de5a-f348-4e9d-b438-e415127a0b4f
+## 🚀 Tecnologias
 
-## How can I edit this code?
+- **React 18** - Framework frontend
+- **TypeScript** - Tipagem estática
+- **Vite** - Build tool ultrarrápido
+- **Tailwind CSS** - Framework de estilos utilitários
+- **React Router** - Roteamento do lado do cliente
+- **Shadcn/ui** - Componentes de interface
+- **Lucide React** - Ícones modernos
 
-There are several ways of editing your application.
+## 🎨 Design System
 
-**Use Lovable**
+- **Fonte**: Inter (Google Fonts)
+- **Cores principais**:
+  - `--brand-blue`: #1f3fae (azul principal)
+  - `--brand-amber`: #f59e0b (CTA laranja/âmbar)
+- **Estilo**: Clean, profissional, cards grandes com sombras sutis
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/f518de5a-f348-4e9d-b438-e415127a0b4f) and start prompting.
+## 📱 Funcionalidades
 
-Changes made via Lovable will be committed automatically to this repo.
+### Área Pública
+- **Home**: Hero section, filtros avançados, grid de imóveis com paginação
+- **Detalhes do Imóvel**: Galeria de imagens, características completas, formulário de contato
+- **Busca e Filtros**: Por cidade, quartos, preço, texto livre
+- **Estados visuais**: Loading skeletons, estado vazio, tratamento de erro
+- **Integração WhatsApp**: CTAs diretos para contato
 
-**Use your preferred IDE**
+### Área Administrativa
+- **Login**: Tela de autenticação (credenciais de demo)
+- **Lista de Imóveis**: Tabela com busca, filtros e ações
+- **Formulário**: Criar/editar imóveis com validação completa
+- **Estados simulados**: Loading, sucesso, erro
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🏗️ Estrutura do Projeto
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+```
+src/
+├── components/          # Componentes reutilizáveis
+│   ├── ui/             # Componentes base (shadcn)
+│   ├── Nav.tsx         # Navegação principal
+│   ├── Hero.tsx        # Seção hero
+│   ├── CardImovel.tsx  # Card de imóvel
+│   ├── Filtros.tsx     # Filtros de busca
+│   ├── FormContato.tsx # Formulário de contato
+│   └── ...
+├── pages/              # Páginas da aplicação
+│   ├── Home.tsx        # Página inicial
+│   ├── Imovel.tsx      # Detalhes do imóvel
+│   ├── AdminLogin.tsx  # Login administrativo
+│   ├── AdminImoveis.tsx # Lista admin
+│   └── AdminImovelForm.tsx # Formulário admin
+├── mocks/              # Dados simulados
+│   └── imoveis.ts      # Mock de imóveis
+├── hooks/              # Custom hooks
+└── lib/                # Utilitários
+```
 
-Follow these steps:
+## 🚀 Como executar
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Pré-requisitos
+- Node.js 18+ 
+- npm ou yarn
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Instalação
 
-# Step 3: Install the necessary dependencies.
-npm i
+```bash
+# Clone o repositório
+git clone <URL_DO_REPOSITORIO>
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Entre na pasta do projeto
+cd pedro-de-toledo-imoveis
+
+# Instale as dependências
+npm install
+
+# Execute o projeto em modo desenvolvimento
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+O projeto estará disponível em `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Outros comandos
 
-**Use GitHub Codespaces**
+```bash
+# Build para produção
+npm run build
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Preview da build
+npm run preview
 
-## What technologies are used for this project?
+# Lint do código
+npm run lint
+```
 
-This project is built with:
+## 🔐 Credenciais de Demonstração
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Para acessar o painel administrativo:
 
-## How can I deploy this project?
+- **Email**: admin@pedrodetoledo.com
+- **Senha**: admin123
 
-Simply open [Lovable](https://lovable.dev/projects/f518de5a-f348-4e9d-b438-e415127a0b4f) and click on Share -> Publish.
+## 📋 Páginas e Rotas
 
-## Can I connect a custom domain to my Lovable project?
+- `/` - Home pública
+- `/imovel/:id` - Detalhes do imóvel
+- `/admin/login` - Login administrativo
+- `/admin/imoveis` - Lista de imóveis (admin)
+- `/admin/imoveis/novo` - Novo imóvel (admin)
+- `/admin/imoveis/:id/editar` - Editar imóvel (admin)
 
-Yes, you can!
+## 🎯 Características Técnicas
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Responsividade
+- Design mobile-first
+- Breakpoints: `sm:`, `md:`, `lg:`, `xl:`
+- Grid adaptável: 1-2-3 colunas
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### Acessibilidade
+- Navegação por teclado
+- Labels associadas
+- Atributos ARIA
+- Alto contraste
+
+### Performance
+- Lazy loading de imagens
+- Skeletons durante carregamento
+- Componentes otimizados
+- Bundle size reduzido
+
+### SEO
+- Meta tags otimizadas
+- Estrutura semântica
+- URLs amigáveis
+- Open Graph tags
+
+## 🔧 Funcionalidades Simuladas
+
+Como este é um projeto frontend puro, algumas funcionalidades são simuladas:
+
+- **Dados**: Mock estático de 12 imóveis
+- **Autenticação**: Validação local apenas
+- **Formulários**: Envio simulado com feedback
+- **Loading states**: Delays artificiais
+- **Estados de erro**: Probabilidade configurável
+
+## 🎨 Customização do Design
+
+O design system está centralizado em:
+- `src/index.css` - Variáveis CSS e tokens de design
+- `tailwind.config.ts` - Configuração do Tailwind
+- Componentes shadcn customizáveis
+
+Para alterar cores, fontes ou espaçamentos, edite as variáveis CSS no arquivo `index.css`.
+
+## 📱 Recursos Mobile
+
+- Interface totalmente responsiva
+- Touch gestures na galeria
+- Botões dimensionados para mobile
+- Menu hambúrguer (se necessário)
+- CTAs otimizados para celular
+
+## 🔮 Possíveis Melhorias
+
+- [ ] PWA (Progressive Web App)
+- [ ] Modo escuro
+- [ ] Internacionalização (i18n)
+- [ ] Testes unitários
+- [ ] Storybook para componentes
+- [ ] Animações com Framer Motion
+- [ ] Integração com APIs reais
+- [ ] Sistema de favoritos persistente
+
+## 📄 Licença
+
+Este projeto foi desenvolvido como demonstração técnica.
+
+---
+
+**Pedro de Toledo Imóveis** - Encontre o imóvel dos seus sonhos! 🏠
