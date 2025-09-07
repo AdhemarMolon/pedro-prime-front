@@ -101,54 +101,6 @@ export default function NotFound() {
           </CardContent>
         </Card>
 
-        {/* Suggestions */}
-        <div className="space-y-4 animate-fade-in-up" style={{animationDelay: '0.9s'}}>
-          <h3 className="text-lg font-semibold text-gray-700">
-            Sugestões para você:
-          </h3>
-          
-          <div className="grid gap-3">
-            <Link 
-              to="/imoveis" 
-              className="group bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/80 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
-            >
-              <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg p-2 group-hover:scale-110 transition-transform duration-300">
-                  <Search className="h-4 w-4 text-white" />
-                </div>
-                <div className="text-left">
-                  <div className="font-medium text-gray-800">Buscar Imóveis</div>
-                  <div className="text-sm text-gray-600">Explore nossa seleção completa</div>
-                </div>
-              </div>
-            </Link>
-            
-            <Link 
-              to="/contato" 
-              className="group bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/80 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
-            >
-              <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg p-2 group-hover:scale-110 transition-transform duration-300">
-                  <HelpCircle className="h-4 w-4 text-white" />
-                </div>
-                <div className="text-left">
-                  <div className="font-medium text-gray-800">Fale Conosco</div>
-                  <div className="text-sm text-gray-600">Precisa de ajuda? Entre em contato</div>
-                </div>
-              </div>
-            </Link>
-          </div>
-        </div>
-
-        {/* Help Text */}
-        <div className="text-xs text-gray-500 animate-fade-in-up bg-white/30 backdrop-blur-sm rounded-lg p-4" style={{animationDelay: '1.2s'}}>
-          <p className="flex items-center justify-center gap-2">
-            <span>Se o problema persistir, entre em contato conosco:</span>
-            <a href="tel:+5511999999999" className="text-blue-600 hover:text-blue-800 font-medium underline">
-              (11) 99999-9999
-            </a>
-          </p>
-        </div>
       </div>
 
       {/* CSS Animations */}

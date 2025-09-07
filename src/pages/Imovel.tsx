@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useEffect as UseEffectAlias } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -14,65 +14,52 @@ import {
   Heart,
   Phone,
   MessageCircle,
-  Calendar,
   Eye,
   Star,
   CheckCircle,
+  Mail,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { ImoveisAPI, ImovelType } from "../lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Separator } from "../components/ui/separator";
-import FormContato from "../components/FormContato";
 
-/**
- * Página de detalhes do imóvel.
- * Agora com fallback entre endpoints e normalização de shape (flat/nested),
- * evitando o "Imóvel não encontrado" por causa de ID/shape divergente.
- */
+/** Contato fixo */
+const CORRETOR = {
+  nome: "Pedro de Toledo",
+  whatsapp: "5516997527532",
+  telefoneDisplay: "(16) 99752-7532",
+  email: "pedro.toledo@creci.org.br",
+};
+const buildWhatsAppLink = (text: string) =>
+  `https://wa.me/${CORRETOR.whatsapp}?text=${encodeURIComponent(text)}`;
+const buildTelLink = () => `tel:+${CORRETOR.whatsapp}`;
 
-// Normaliza qualquer shape vindo da API (flat ou nested) para ImovelType usado na UI
+/** Normaliza o shape e as imagens (strings → {url,legenda}) */
 function normalizeImovel(raw: any | null | undefined): ImovelType | null {
   if (!raw) return null;
-
-  // Ids possíveis
   const id = raw._id ?? raw.id ?? raw.uuid ?? raw.slug ?? null;
-
-  // Endereço / cidade
   const cidade = raw.cidade ?? raw?.endereco?.cidade ?? raw?.localidade ?? "";
+  const area = raw.area ?? raw?.caracteristicas?.area_m2 ?? raw?.caracteristicas?.area ?? undefined;
+  const quartos = raw.quartos ?? raw?.caracteristicas?.quartos ?? undefined;
+  const banheiros = raw.banheiros ?? raw?.caracteristicas?.banheiros ?? undefined;
+  const vagas = raw.vagas ?? raw?.caracteristicas?.garagem ?? raw?.garagem ?? undefined;
 
-  // Características
-  const area =
-    raw.area ??
-    raw?.caracteristicas?.area_m2 ??
-    raw?.caracteristicas?.area ??
-    undefined;
-
-  const quartos =
-    raw.quartos ?? raw?.caracteristicas?.quartos ?? undefined;
-
-  const banheiros =
-    raw.banheiros ?? raw?.caracteristicas?.banheiros ?? undefined;
-
-  const vagas =
-    raw.vagas ?? raw?.caracteristicas?.garagem ?? raw?.garagem ?? undefined;
-
-  // Imagens (aceita diferentes chaves e normaliza para [{url, legenda}])
   const imagensRaw = raw.imagens ?? raw.fotos ?? raw.images ?? [];
-  const imagens =
-    Array.isArray(imagensRaw)
-      ? imagensRaw.map((img: any) =>
-          typeof img === "string"
-            ? { url: img, legenda: "" }
-            : { url: img?.url ?? img?.src ?? "", legenda: img?.legenda ?? "" }
-        )
-      : [];
+  const imagens = Array.isArray(imagensRaw)
+    ? imagensRaw.map((img: any) =>
+        typeof img === "string"
+          ? { url: img, legenda: "" }
+          : { url: img?.url ?? img?.src ?? "", legenda: img?.legenda ?? "" }
+      )
+    : [];
 
   return {
-    // mantém tudo que já veio
     ...raw,
-    // sobrescreve/garante o que a UI espera
     _id: raw._id ?? id ?? undefined,
     id: id ?? undefined,
     titulo: raw.titulo ?? raw.nome ?? raw.title ?? "Imóvel",
@@ -83,7 +70,6 @@ function normalizeImovel(raw: any | null | undefined): ImovelType | null {
     banheiros,
     vagas,
     imagens,
-    // compat: alguns lugares usam 'tipo'
     tipo: raw.tipo ?? raw.categoria ?? raw.finalidade,
   } as ImovelType;
 }
@@ -95,45 +81,67 @@ export default function Imovel() {
   const [isFavorited, setIsFavorited] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  // Lightbox / Modal de imagem
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // contato
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [mensagem, setMensagem] = useState("");
+
+  // bloquear scroll quando o modal estiver aberto
+  useEffect(() => {
+    if (isModalOpen) {
+      const original = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = original;
+      };
+    }
+  }, [isModalOpen]);
+
+  // navegação por teclado dentro do modal
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (!isModalOpen) return;
+      if (e.key === "Escape") setIsModalOpen(false);
+      if (e.key === "ArrowRight") nextImage();
+      if (e.key === "ArrowLeft") prevImage();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isModalOpen, currentImageIndex, item?.imagens?.length]
+  );
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
-
     (async () => {
       setLoading(true);
       try {
-        // 1) Tenta o endpoint principal
         let data: any = null;
         try {
           data = await ImoveisAPI.get(id);
-        } catch {
-          // ignora e tenta fallback
-        }
-
-        // 2) Se vier vazio, tenta fallback usado no Admin
+        } catch {}
         if (!data) {
           try {
             data = await ImoveisAPI.getOne(id);
-          } catch {
-            // se falhar também, data permanece null
-          }
+          } catch {}
         }
 
         const normalized = normalizeImovel(data);
-
-        if (!cancelled) {
-          setItem(normalized);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          console.error("Erro ao carregar imóvel:", error);
-          setItem(null);
-        }
+        if (!cancelled) setItem(normalized);
+      } catch {
+        if (!cancelled) setItem(null);
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
-
     return () => {
       cancelled = true;
     };
@@ -206,17 +214,12 @@ export default function Imovel() {
     );
   }
 
-  const formatPrice = (price?: number) => {
-    if (!price) return "Preço não informado";
-    return `R$ ${price.toLocaleString("pt-BR")}`;
-  };
+  const formatPrice = (price?: number) =>
+    !price ? "Preço não informado" : `R$ ${price.toLocaleString("pt-BR")}`;
 
   const handleWhatsAppClick = () => {
-    const phoneNumber = "5511999999999";
-    const message = encodeURIComponent(
-      `Olá! Tenho interesse no imóvel "${item.titulo}". Gostaria de mais informações.`
-    );
-    window.open(`https://wa.me/${phoneNumber}?text=${message}`, "_blank");
+    const text = `Olá, ${CORRETOR.nome}! Tenho interesse no imóvel "${item.titulo}". Gostaria de mais informações.`;
+    window.open(buildWhatsAppLink(text), "_blank");
   };
 
   const handleShare = async () => {
@@ -227,12 +230,25 @@ export default function Imovel() {
           text: `Confira este imóvel: ${item.titulo}`,
           url: window.location.href,
         });
-      } catch (error) {
-        console.log("Erro ao compartilhar:", error);
-      }
+      } catch {}
     } else {
       navigator.clipboard.writeText(window.location.href);
     }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const linhas: string[] = [];
+    linhas.push(`Olá, ${CORRETOR.nome}! 👋`);
+    linhas.push(`Tenho interesse no imóvel: "${item.titulo}".`);
+    if (mensagem.trim()) {
+      linhas.push("", "Mensagem:", mensagem.trim());
+    }
+    linhas.push("", "Meus dados para contato:");
+    if (nome.trim()) linhas.push(`• Nome: ${nome.trim()}`);
+    if (email.trim()) linhas.push(`• E-mail: ${email.trim()}`);
+    if (telefone.trim()) linhas.push(`• Telefone: ${telefone.trim()}`);
+    window.open(buildWhatsAppLink(linhas.join("\n")), "_blank");
   };
 
   const propertyFeatures = [
@@ -240,7 +256,24 @@ export default function Imovel() {
     { icon: Bed, label: "Quartos", value: item.quartos || null },
     { icon: Bath, label: "Banheiros", value: item.banheiros || null },
     { icon: Car, label: "Vagas", value: item.vagas || null },
-  ].filter((feature) => feature.value !== null);
+  ].filter((f) => f.value !== null);
+
+  // ---- Lightbox helpers ----
+  const openModalAt = (idx: number) => {
+    setCurrentImageIndex(idx);
+    setIsModalOpen(true);
+  };
+  const closeModal = () => setIsModalOpen(false);
+  const nextImage = () => {
+    if (!item?.imagens?.length) return;
+    setCurrentImageIndex((prev) => (prev + 1) % item.imagens.length);
+  };
+  const prevImage = () => {
+    if (!item?.imagens?.length) return;
+    setCurrentImageIndex((prev) =>
+      (prev - 1 + item.imagens.length) % item.imagens.length
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
@@ -265,10 +298,14 @@ export default function Imovel() {
                 size="sm"
                 onClick={() => setIsFavorited(!isFavorited)}
                 className={`hover:scale-105 transition-all duration-200 ${
-                  isFavorited ? "bg-red-50 border-red-200 text-red-600" : "hover:bg-gray-50"
+                  isFavorited
+                    ? "bg-red-50 border-red-200 text-red-600"
+                    : "hover:bg-gray-50"
                 }`}
               >
-                <Heart className={`h-4 w-4 mr-2 ${isFavorited ? "fill-current" : ""}`} />
+                <Heart
+                  className={`h-4 w-4 mr-2 ${isFavorited ? "fill-current" : ""}`}
+                />
                 {isFavorited ? "Favoritado" : "Favoritar"}
               </Button>
               <Button
@@ -287,9 +324,8 @@ export default function Imovel() {
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content */}
+          {/* Coluna principal */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Hero */}
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
               <div className="p-6 pb-0">
                 <div className="flex items-start justify-between mb-4">
@@ -329,35 +365,48 @@ export default function Imovel() {
                 </div>
               </div>
 
-              {/* Image Gallery */}
-              {item.imagens && item.imagens.length > 0 && (
+              {/* Galeria de imagens */}
+              {item.imagens && item.imagens.length > 0 ? (
                 <div className="px-6 pb-6">
-                  <div className="relative rounded-2xl overflow-hidden">
+                  {/* Imagem principal */}
+                  <button
+                    type="button"
+                    onClick={() => openModalAt(currentImageIndex)}
+                    className="relative rounded-2xl overflow-hidden w-full block group"
+                    aria-label="Ampliar imagem"
+                  >
                     <img
                       src={item.imagens[currentImageIndex]?.url || item.imagens[0]?.url}
                       alt={item.titulo}
-                      className="w-full h-96 object-cover"
+                      className="w-full h-96 object-cover transition-transform duration-300 group-hover:scale-105"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent pointer-events-none" />
                     <div className="absolute top-4 right-4">
                       <Badge className="bg-black/50 text-white border-0">
                         <ImageIcon className="h-3 w-3 mr-1" />
                         {currentImageIndex + 1}/{item.imagens.length}
                       </Badge>
                     </div>
-                  </div>
+                    <div className="absolute bottom-3 right-3 text-xs text-white/90 bg-black/40 px-2 py-1 rounded">
+                      Clique para ampliar
+                    </div>
+                  </button>
 
+                  {/* Miniaturas */}
                   {item.imagens.length > 1 && (
                     <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
                       {item.imagens.map((img, idx) => (
                         <button
                           key={idx}
                           onClick={() => setCurrentImageIndex(idx)}
+                          onDoubleClick={() => openModalAt(idx)}
                           className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
                             idx === currentImageIndex
                               ? "border-blue-500 scale-105"
                               : "border-gray-200 hover:border-gray-300"
                           }`}
+                          title={img.legenda || `Imagem ${idx + 1}`}
+                          aria-label={`Selecionar imagem ${idx + 1}`}
                         >
                           <img
                             src={img.url}
@@ -368,6 +417,13 @@ export default function Imovel() {
                       ))}
                     </div>
                   )}
+                </div>
+              ) : (
+                <div className="px-6 pb-6">
+                  <div className="h-48 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400">
+                    <ImageIcon className="h-8 w-8" />
+                    <span className="ml-2">Sem imagens para este imóvel</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -406,7 +462,7 @@ export default function Imovel() {
               </Card>
             )}
 
-            {/* Description */}
+            {/* Descrição */}
             {item.descricao && (
               <Card className="shadow-xl border-0">
                 <CardHeader>
@@ -426,9 +482,47 @@ export default function Imovel() {
             )}
           </div>
 
-          {/* Sidebar */}
+          {/* Sidebar (contato, preço etc.) */}
           <div className="space-y-6">
-            {/* Price Card */}
+            <Card className="shadow-xl border-0">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-blue-800">WhatsApp / Telefone</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-emerald-50 flex items-center justify-center">
+                    <Phone className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <div className="font-medium text-gray-700">{CORRETOR.telefoneDisplay}</div>
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={handleWhatsAppClick} className="bg-emerald-600 hover:bg-emerald-700">
+                    WhatsApp
+                  </Button>
+                  <a href={buildTelLink()} className="inline-block">
+                    <Button variant="outline">Ligar</Button>
+                  </a>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-xl border-0">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-blue-800">E-mail</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center">
+                    <Mail className="h-5 w-5 text-indigo-600" />
+                  </div>
+                  <div className="text-gray-700">{CORRETOR.email}</div>
+                </div>
+                <a href={`mailto:${CORRETOR.email}`} className="inline-block">
+                  <Button>Enviar E-mail</Button>
+                </a>
+              </CardContent>
+            </Card>
+
             <Card className="shadow-xl border-0">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2">
@@ -447,27 +541,22 @@ export default function Imovel() {
                     </p>
                   )}
                 </div>
-
                 <Separator />
-
                 <div className="space-y-3">
                   <Button className="w-full" size="lg" onClick={handleWhatsAppClick}>
                     <MessageCircle className="mr-2 h-5 w-5" />
                     WhatsApp
                   </Button>
-                  <Button variant="outline" className="w-full" size="lg">
-                    <Phone className="mr-2 h-4 w-4" />
-                    Ligar Agora
-                  </Button>
-                  <Button variant="outline" className="w-full" size="lg">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    Agendar Visita
-                  </Button>
+                  <a href={buildTelLink()} className="block">
+                    <Button variant="outline" className="w-full" size="lg">
+                      <Phone className="mr-2 h-4 w-4" />
+                      Ligar Agora ({CORRETOR.telefoneDisplay})
+                    </Button>
+                  </a>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Quick Info */}
             <Card className="shadow-xl border-0">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -495,11 +584,135 @@ export default function Imovel() {
               </CardContent>
             </Card>
 
-            {/* Contact Form */}
-            <FormContato imovelTitulo={item.titulo} />
+            {/* Form de contato → WhatsApp */}
+            <Card className="shadow-xl border-0">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5 text-emerald-600" />
+                  Entre em contato
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleFormSubmit} className="space-y-4">
+                  <div className="grid gap-2">
+                    <label className="text-sm text-gray-700">Nome</label>
+                    <input
+                      className="h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                      value={nome}
+                      onChange={(e) => setNome(e.target.value)}
+                      placeholder="Seu nome completo"
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <label className="text-sm text-gray-700">E-mail</label>
+                    <input
+                      type="email"
+                      className="h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="voce@exemplo.com"
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <label className="text-sm text-gray-700">Telefone / WhatsApp</label>
+                    <input
+                      className="h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                      value={telefone}
+                      onChange={(e) => setTelefone(e.target.value)}
+                      placeholder={CORRETOR.telefoneDisplay}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <label className="text-sm text-gray-700">Mensagem</label>
+                    <textarea
+                      className="min-h-[120px] rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                      value={mensagem}
+                      onChange={(e) => setMensagem(e.target.value)}
+                      placeholder={`Olá! Tenho interesse no imóvel "${item.titulo}".`}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full">
+                    <MessageCircle className="mr-2 h-5 w-5" />
+                    Enviar mensagem pelo WhatsApp
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>
+
+      {/* ---- MODAL / LIGHTBOX ---- */}
+      {isModalOpen && item.imagens && item.imagens.length > 0 && (
+        <div
+          className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center"
+          onClick={closeModal}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Visualização da imagem"
+        >
+          {/* Botão fechar */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              closeModal();
+            }}
+            className="absolute top-5 right-5 text-white/90 hover:text-white p-2"
+            aria-label="Fechar"
+            title="Fechar (Esc)"
+          >
+            <X className="w-7 h-7" />
+          </button>
+
+          {/* Botões navegação */}
+          {item.imagens.length > 1 && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  prevImage();
+                }}
+                className="absolute left-3 md:left-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                aria-label="Imagem anterior"
+                title="Anterior (←)"
+              >
+                <ChevronLeft className="w-7 h-7" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  nextImage();
+                }}
+                className="absolute right-3 md:right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                aria-label="Próxima imagem"
+                title="Próxima (→)"
+              >
+                <ChevronRight className="w-7 h-7" />
+              </button>
+            </>
+          )}
+
+          {/* Container da imagem (impede fechar ao clicar na imagem) */}
+          <div
+            className="max-w-[95vw] max-h-[92vh] flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={item.imagens[currentImageIndex]?.url}
+              alt={item.imagens[currentImageIndex]?.legenda || item.titulo}
+              className="object-contain max-w-[95vw] max-h-[92vh] rounded-lg shadow-2xl"
+              draggable={false}
+            />
+          </div>
+
+          {/* Contador */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/90 text-sm bg-white/10 px-3 py-1 rounded-full">
+            {currentImageIndex + 1} / {item.imagens.length}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -75,13 +75,17 @@ export default function AdminImoveis() {
           {items.map((i) => (
             <tr key={i._id} className="border-t">
               <td className="p-2">{i.titulo}</td>
-              <td className="p-2">R$ {Number(i.preco).toLocaleString("pt-BR")}</td>
+              <td className="p-2">
+                R$ {Number(i.preco).toLocaleString("pt-BR")}
+              </td>
               <td className="p-2">{i.endereco?.cidade || "-"}</td>
               <td className="p-2">{i.caracteristicas?.quartos ?? "-"}</td>
               <td className="p-2">
                 <Link
                   to={`/admin/imoveis/${i._id}`}
+                  state={{ imovel: i }} // ✅ prefill instantâneo
                   className="mr-3 underline"
+                  onMouseEnter={() => i._id && ImoveisAPI.getOne(i._id)} // ✅ prefetch
                 >
                   Editar
                 </Link>

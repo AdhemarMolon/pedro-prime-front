@@ -38,6 +38,8 @@ export type Imovel = {
     garagem?: number;
     area_m2?: number;
   };
+
+imagens?: string[];
   createdAt?: string;
   updatedAt?: string;
 };

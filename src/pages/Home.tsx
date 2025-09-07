@@ -179,14 +179,10 @@ export default function Home() {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-300">imóvel ideal</span>
             </h1>
             <p className="text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto leading-relaxed">
-              Descubra as melhores oportunidades imobiliárias com nossa tecnologia avançada de busca
+              Descubra as melhores oportunidades imobiliárias
             </p>
 
             <div className="flex flex-wrap justify-center gap-8 mt-8 text-sm">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                <span className="text-blue-100">Atualizado em tempo real</span>
-              </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></div>
                 <span className="text-blue-100">Preços competitivos</span>

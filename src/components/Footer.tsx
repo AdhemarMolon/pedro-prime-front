@@ -1,180 +1,108 @@
-import { Link } from "react-router-dom";
-import { Building2, Phone, Mail, MapPin, Facebook, Instagram, Linkedin, MessageCircle } from "lucide-react";
+// src/pages/Footer.tsx
+import { Mail, Phone, Facebook, MessageCircle } from "lucide-react";
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear();
+  const YEAR = new Date().getFullYear();
 
-  const handleWhatsAppClick = () => {
-    const phoneNumber = '5511999999999';
-    const message = encodeURIComponent('Olá! Gostaria de mais informações sobre os imóveis.');
-    window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
-  };
+  // Dados
+  const WHATS_E164 = "5516997527532"; // +55 16 99752-7532
+  const WHATS_MSG = "Olá! Gostaria de solicitar uma avaliação de imóvel.";
+  const EMAIL = "pedro.toledo@creci.org.br";
+  const FACEBOOK_URL =
+    "https://www.facebook.com/people/Pedro-de-Toledo/100071185627021/";
+  const CRECI = "CRECI-SP 237958-F";
+  const CNAI = "CNAI 39817";
 
-  const navigation = {
-    main: [
-      { name: 'Início', href: '/' },
-      { name: 'Imóveis', href: '/imoveis' },
-      { name: 'Sobre Nós', href: '/sobre' },
-      { name: 'Contato', href: '/contato' },
-    ],
-    services: [
-      { name: 'Venda de Imóveis', href: '/servicos/venda' },
-      { name: 'Locação', href: '/servicos/locacao' },
-      { name: 'Avaliação', href: '/servicos/avaliacao' },
-      { name: 'Consultoria', href: '/servicos/consultoria' },
-    ],
-    legal: [
-      { name: 'Política de Privacidade', href: '/privacidade' },
-      { name: 'Termos de Uso', href: '/termos' },
-      { name: 'LGPD', href: '/lgpd' },
-    ],
-  };
-
-  const socialLinks = [
-    { name: 'Facebook', icon: Facebook, href: '#', color: 'hover:text-blue-600' },
-    { name: 'Instagram', icon: Instagram, href: '#', color: 'hover:text-pink-600' },
-    { name: 'LinkedIn', icon: Linkedin, href: '#', color: 'hover:text-blue-700' },
-  ];
+  const openWhats = () =>
+    window.open(
+      `https://wa.me/${WHATS_E164}?text=${encodeURIComponent(WHATS_MSG)}`,
+      "_blank"
+    );
 
   return (
-    <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        {/* Main Footer Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-          {/* Company Info */}
-          <div className="lg:col-span-1">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-400 to-amber-400" />
-              <h3 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-amber-400 bg-clip-text text-transparent">
-                FullStack Imóveis
-              </h3>
-            </div>
-            <p className="text-gray-300 text-sm mb-6 leading-relaxed">
-              Há mais de 15 anos realizando sonhos e conectando pessoas aos seus lares ideais. 
-              Sua confiança é nosso maior patrimônio.
-            </p>
-            
-            {/* Contact Info */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 text-sm text-gray-300">
-                <Phone className="h-4 w-4 text-amber-400" />
-                <span>(11) 99999-9999</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm text-gray-300">
-                <Mail className="h-4 w-4 text-blue-400" />
-                <span>contato@fullstackimoveis.com.br</span>
-              </div>
-              <div className="flex items-start gap-3 text-sm text-gray-300">
-                <MapPin className="h-4 w-4 text-red-400 mt-0.5" />
-                <span>Rua dos Sonhos, 123<br />Centro - São Paulo/SP</span>
-              </div>
-            </div>
+    <footer className="bg-[#1d39b4] text-white">
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        {/* Cabeçalho do footer */}
+        <div className="flex flex-col gap-2 mb-8">
+          <div className="flex items-center gap-3">
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+            <h3 className="text-xl font-bold tracking-tight">Toledo Imóveis</h3>
           </div>
+          <p className="text-sm text-white/90">
+            Por <span className="font-semibold">Pedro de Toledo</span>, corretor
+            e avaliador credenciado.
+          </p>
+        </div>
 
-          {/* Navigation Links */}
-          <div>
-            <h4 className="font-semibold text-white mb-4 flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-blue-400" />
-              Navegação
-            </h4>
-            <ul className="space-y-2">
-              {navigation.main.map((item) => (
-                <li key={item.name}>
-                  <Link
-                    to={item.href}
-                    className="text-gray-300 hover:text-amber-400 text-sm transition-colors duration-200 hover:translate-x-1 inline-block"
-                  >
-                    {item.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Services */}
-          <div>
-            <h4 className="font-semibold text-white mb-4">Nossos Serviços</h4>
-            <ul className="space-y-2">
-              {navigation.services.map((item) => (
-                <li key={item.name}>
-                  <Link
-                    to={item.href}
-                    className="text-gray-300 hover:text-blue-400 text-sm transition-colors duration-200 hover:translate-x-1 inline-block"
-                  >
-                    {item.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* CTA & Social */}
-          <div>
-            <h4 className="font-semibold text-white mb-4">Fale Conosco</h4>
+        {/* Grid de contato */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          {/* Coluna principal (WhatsApp + telefone + e-mail) */}
+          <div className="md:col-span-2 space-y-4">
             <button
-              onClick={handleWhatsAppClick}
-              className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 shadow-lg flex items-center gap-2 mb-6"
+              onClick={openWhats}
+              className="w-full md:w-[480px] inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 bg-green-600 hover:bg-green-700 transition-colors text-sm font-medium shadow"
+              aria-label="Abrir WhatsApp"
+              title="Solicitar avaliação pelo WhatsApp"
             >
               <MessageCircle className="h-4 w-4" />
-              WhatsApp
+              WhatsApp: (16) 99752-7532
             </button>
 
-            <div>
-              <h5 className="font-medium text-white mb-3">Siga-nos</h5>
-              <div className="flex gap-3">
-                {socialLinks.map((social) => {
-                  const Icon = social.icon;
-                  return (
-                    <a
-                      key={social.name}
-                      href={social.href}
-                      className={`text-gray-400 ${social.color} transition-colors duration-200 hover:scale-110`}
-                      aria-label={social.name}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </a>
-                  );
-                })}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="inline-flex items-center gap-3 text-sm">
+                <Phone className="h-4 w-4 text-amber-300" />
+                <span>(16) 99752-7532</span>
               </div>
+
+              <div className="inline-flex items-center gap-3 text-sm">
+                <Mail className="h-4 w-4 text-blue-200" />
+                <a
+                  href={`mailto:${EMAIL}`}
+                  className="hover:underline break-all"
+                >
+                  {EMAIL}
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Coluna lateral (Facebook) */}
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <div className="flex items-center gap-3 text-sm">
+              <Facebook className="h-5 w-5 text-blue-300" />
+              <a
+                href={FACEBOOK_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:underline"
+              >
+                Facebook
+              </a>
             </div>
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-gray-700 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            {/* Copyright */}
-            <div className="text-sm text-gray-400">
-              © {currentYear} FullStack Imóveis. Todos os direitos reservados.
-            </div>
+        {/* Credenciais */}
+        <div className="mt-8 text-xs text-white/85 flex flex-wrap items-center gap-3">
+          <span>• {CRECI}</span>
+          <span>• {CNAI}</span>
+        </div>
+      </div>
 
-            {/* Legal Links */}
-            <div className="flex flex-wrap gap-4">
-              {navigation.legal.map((item, index) => (
-                <span key={item.name} className="flex items-center gap-4">
-                  <Link
-                    to={item.href}
-                    className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
-                  >
-                    {item.name}
-                  </Link>
-                  {index < navigation.legal.length - 1 && (
-                    <span className="text-gray-600">•</span>
-                  )}
-                </span>
-              ))}
-            </div>
-          </div>
+      {/* Barra inferior + crédito pequeno */}
+      <div className="border-t border-white/10">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+          <span className="text-xs text-white/70">© {YEAR} Toledo Imóveis</span>
 
-          {/* Badge */}
-          <div className="mt-6 text-center">
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500/10 to-amber-500/10 border border-blue-500/20 rounded-full px-4 py-2">
-              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-              <span className="text-xs text-gray-300">
-                CRECI-SP 12345 • Licenciado pelo CRECI
-              </span>
-            </div>
-          </div>
+          <a
+            href="https://adhemarmolon.github.io/portfolio/"
+            target="_blank"
+            rel="noreferrer"
+            className="text-[10px] px-2 py-1 rounded border border-white/20 hover:border-white/40 hover:bg-white/10 transition"
+            title="Ver portfólio de Adhemar Molon"
+          >
+            Desenvolvido por Adhemar Molon
+          </a>
         </div>
       </div>
     </footer>

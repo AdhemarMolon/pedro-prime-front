@@ -45,24 +45,6 @@ export default function Filtros({ value, onChange, onClear }: Props) {
         onChange={(e) => set({ precoMax: e.target.value })}
       />
 
-      {/* Área */}
-      <input
-        className="border rounded-lg px-3 py-2"
-        type="number"
-        min={0}
-        placeholder="Área mín. (m²)"
-        value={value.areaMin}
-        onChange={(e) => set({ areaMin: e.target.value })}
-      />
-      <input
-        className="border rounded-lg px-3 py-2"
-        type="number"
-        min={0}
-        placeholder="Área máx. (m²)"
-        value={value.areaMax}
-        onChange={(e) => set({ areaMax: e.target.value })}
-      />
-
       {/* Limpar */}
       <button
         type="button"
