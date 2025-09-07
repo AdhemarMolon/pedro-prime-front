@@ -1,126 +1,182 @@
-import { Building2, Phone, Mail, MapPin, Facebook, Instagram, Linkedin } from 'lucide-react';
+import { Link } from "react-router-dom";
+import { Building2, Phone, Mail, MapPin, Facebook, Instagram, Linkedin, MessageCircle } from "lucide-react";
 
-const Footer = () => {
+export default function Footer() {
+  const currentYear = new Date().getFullYear();
+
+  const handleWhatsAppClick = () => {
+    const phoneNumber = '5511999999999';
+    const message = encodeURIComponent('Olá! Gostaria de mais informações sobre os imóveis.');
+    window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+  };
+
+  const navigation = {
+    main: [
+      { name: 'Início', href: '/' },
+      { name: 'Imóveis', href: '/imoveis' },
+      { name: 'Sobre Nós', href: '/sobre' },
+      { name: 'Contato', href: '/contato' },
+    ],
+    services: [
+      { name: 'Venda de Imóveis', href: '/servicos/venda' },
+      { name: 'Locação', href: '/servicos/locacao' },
+      { name: 'Avaliação', href: '/servicos/avaliacao' },
+      { name: 'Consultoria', href: '/servicos/consultoria' },
+    ],
+    legal: [
+      { name: 'Política de Privacidade', href: '/privacidade' },
+      { name: 'Termos de Uso', href: '/termos' },
+      { name: 'LGPD', href: '/lgpd' },
+    ],
+  };
+
+  const socialLinks = [
+    { name: 'Facebook', icon: Facebook, href: '#', color: 'hover:text-blue-600' },
+    { name: 'Instagram', icon: Instagram, href: '#', color: 'hover:text-pink-600' },
+    { name: 'LinkedIn', icon: Linkedin, href: '#', color: 'hover:text-blue-700' },
+  ];
+
   return (
-    <footer className="bg-primary text-primary-foreground">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Empresa */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Building2 className="h-8 w-8 text-brand-amber" />
-              <span className="text-xl font-bold">Pedro de Toledo Imóveis</span>
+    <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900 text-white">
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        {/* Main Footer Content */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+          {/* Company Info */}
+          <div className="lg:col-span-1">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-400 to-amber-400" />
+              <h3 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-amber-400 bg-clip-text text-transparent">
+                FullStack Imóveis
+              </h3>
             </div>
-            <p className="text-primary-foreground/80 leading-relaxed">
+            <p className="text-gray-300 text-sm mb-6 leading-relaxed">
               Há mais de 15 anos realizando sonhos e conectando pessoas aos seus lares ideais. 
-              Sua confiança é nossa maior conquista.
+              Sua confiança é nosso maior patrimônio.
             </p>
-            <div className="flex gap-4">
-              <a href="#" className="text-primary-foreground/60 hover:text-brand-amber transition-colors">
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-primary-foreground/60 hover:text-brand-amber transition-colors">
-                <Instagram className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-primary-foreground/60 hover:text-brand-amber transition-colors">
-                <Linkedin className="h-5 w-5" />
-              </a>
-            </div>
-          </div>
-
-          {/* Contato */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Contato</h3>
+            
+            {/* Contact Info */}
             <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Phone className="h-4 w-4 text-brand-amber flex-shrink-0" />
-                <span className="text-primary-foreground/80">(11) 99999-9999</span>
+              <div className="flex items-center gap-3 text-sm text-gray-300">
+                <Phone className="h-4 w-4 text-amber-400" />
+                <span>(11) 99999-9999</span>
               </div>
-              <div className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-brand-amber flex-shrink-0" />
-                <span className="text-primary-foreground/80">contato@pedrodetoledo.com.br</span>
+              <div className="flex items-center gap-3 text-sm text-gray-300">
+                <Mail className="h-4 w-4 text-blue-400" />
+                <span>contato@fullstackimoveis.com.br</span>
               </div>
-              <div className="flex items-start gap-3">
-                <MapPin className="h-4 w-4 text-brand-amber flex-shrink-0 mt-1" />
-                <span className="text-primary-foreground/80">
-                  Av. Paulista, 1000 - Sala 1201<br />
-                  Bela Vista, São Paulo - SP
-                </span>
+              <div className="flex items-start gap-3 text-sm text-gray-300">
+                <MapPin className="h-4 w-4 text-red-400 mt-0.5" />
+                <span>Rua dos Sonhos, 123<br />Centro - São Paulo/SP</span>
               </div>
             </div>
           </div>
 
-          {/* Serviços */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Serviços</h3>
+          {/* Navigation Links */}
+          <div>
+            <h4 className="font-semibold text-white mb-4 flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-blue-400" />
+              Navegação
+            </h4>
             <ul className="space-y-2">
-              <li>
-                <a href="#" className="text-primary-foreground/80 hover:text-brand-amber transition-colors">
-                  Compra de Imóveis
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-primary-foreground/80 hover:text-brand-amber transition-colors">
-                  Venda de Imóveis
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-primary-foreground/80 hover:text-brand-amber transition-colors">
-                  Locação
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-primary-foreground/80 hover:text-brand-amber transition-colors">
-                  Avaliação Gratuita
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-primary-foreground/80 hover:text-brand-amber transition-colors">
-                  Consultoria Imobiliária
-                </a>
-              </li>
+              {navigation.main.map((item) => (
+                <li key={item.name}>
+                  <Link
+                    to={item.href}
+                    className="text-gray-300 hover:text-amber-400 text-sm transition-colors duration-200 hover:translate-x-1 inline-block"
+                  >
+                    {item.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Horário */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Horário de Atendimento</h3>
-            <div className="space-y-2 text-primary-foreground/80">
-              <div>
-                <div className="font-medium">Segunda a Sexta</div>
-                <div>08:00 às 18:00</div>
-              </div>
-              <div>
-                <div className="font-medium">Sábado</div>
-                <div>09:00 às 14:00</div>
-              </div>
-              <div>
-                <div className="font-medium">Domingo</div>
-                <div>Sob agendamento</div>
+          {/* Services */}
+          <div>
+            <h4 className="font-semibold text-white mb-4">Nossos Serviços</h4>
+            <ul className="space-y-2">
+              {navigation.services.map((item) => (
+                <li key={item.name}>
+                  <Link
+                    to={item.href}
+                    className="text-gray-300 hover:text-blue-400 text-sm transition-colors duration-200 hover:translate-x-1 inline-block"
+                  >
+                    {item.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* CTA & Social */}
+          <div>
+            <h4 className="font-semibold text-white mb-4">Fale Conosco</h4>
+            <button
+              onClick={handleWhatsAppClick}
+              className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 shadow-lg flex items-center gap-2 mb-6"
+            >
+              <MessageCircle className="h-4 w-4" />
+              WhatsApp
+            </button>
+
+            <div>
+              <h5 className="font-medium text-white mb-3">Siga-nos</h5>
+              <div className="flex gap-3">
+                {socialLinks.map((social) => {
+                  const Icon = social.icon;
+                  return (
+                    <a
+                      key={social.name}
+                      href={social.href}
+                      className={`text-gray-400 ${social.color} transition-colors duration-200 hover:scale-110`}
+                      aria-label={social.name}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </a>
+                  );
+                })}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Linha divisória */}
-        <div className="border-t border-primary-foreground/20 mt-8 pt-8">
+        {/* Divider */}
+        <div className="border-t border-gray-700 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="text-primary-foreground/60 text-sm">
-              © 2024 Pedro de Toledo Imóveis. Todos os direitos reservados.
+            {/* Copyright */}
+            <div className="text-sm text-gray-400">
+              © {currentYear} FullStack Imóveis. Todos os direitos reservados.
             </div>
-            <div className="flex gap-6 text-sm">
-              <a href="#" className="text-primary-foreground/60 hover:text-brand-amber transition-colors">
-                Política de Privacidade
-              </a>
-              <a href="#" className="text-primary-foreground/60 hover:text-brand-amber transition-colors">
-                Termos de Uso
-              </a>
+
+            {/* Legal Links */}
+            <div className="flex flex-wrap gap-4">
+              {navigation.legal.map((item, index) => (
+                <span key={item.name} className="flex items-center gap-4">
+                  <Link
+                    to={item.href}
+                    className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
+                  >
+                    {item.name}
+                  </Link>
+                  {index < navigation.legal.length - 1 && (
+                    <span className="text-gray-600">•</span>
+                  )}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Badge */}
+          <div className="mt-6 text-center">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500/10 to-amber-500/10 border border-blue-500/20 rounded-full px-4 py-2">
+              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+              <span className="text-xs text-gray-300">
+                CRECI-SP 12345 • Licenciado pelo CRECI
+              </span>
             </div>
           </div>
         </div>
       </div>
     </footer>
   );
-};
-
-export default Footer;
+}
