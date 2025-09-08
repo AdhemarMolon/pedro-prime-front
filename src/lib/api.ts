@@ -1,24 +1,13 @@
 // src/lib/api.ts
 
-// =========================
-// Base da API
-// =========================
-
-// Lê da ENV (Vite). Só variáveis que começam com VITE_ são expostas no browser.
-// Se não existir, usa fallback público (Render).
+// Base lida do Vite + fallback público
 const RAW_BASE =
   (import.meta as any)?.env?.VITE_API_BASE ??
   (import.meta as any)?.env?.VITE_API_URL ??
   "";
-
 const DEFAULT_BASE = "https://fullstack-imoveis-api.onrender.com";
-
-// normaliza removendo barra final
 export const API_BASE: string = String(RAW_BASE || DEFAULT_BASE).replace(/\/+$/, "");
 
-// =========================
-// Utils internos
-// =========================
 type Query = Record<string, string | number | boolean | null | undefined>;
 
 function toQuery(q?: Query) {
@@ -40,10 +29,6 @@ async function http<T>(
   const p = path.startsWith("/") ? path : `/${path}`;
   const url = `${API_BASE}${p}${toQuery(query)}`;
 
-  if (typeof window !== "undefined") {
-    console.log("[api] URL =>", url);
-  }
-
   const res = await fetch(url, {
     cache: (opts.cache as RequestCache) ?? "no-store",
     ...opts,
@@ -63,15 +48,23 @@ async function http<T>(
   try {
     return JSON.parse(txt) as T;
   } catch {
-    // quando não for JSON, devolve texto
-    // @ts-expect-error
+    // @ts-expect-error texto puro (ex.: /healthz)
     return txt as T;
   }
 }
 
-// =========================
-// Tipos
-// =========================
+/* ======== util ======== */
+export const ping = () => http<string>("/healthz");
+
+/* ======== login admin ======== */
+export async function loginAdmin(email: string, password: string) {
+  return http<{ token: string }>("/api/admin/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+/* ======== imóveis ======== */
 export type Imovel = {
   _id?: string;
   id?: string;
@@ -85,14 +78,6 @@ export type Imovel = {
   finalidade?: string;
 };
 
-// =========================
-// Endpoints utilitários
-// =========================
-export const ping = () => http<string>("/healthz");
-
-// =========================
-// API usada nas telas
-// =========================
 export const ImoveisAPI = {
   list(params?: { page?: number; limit?: number }) {
     return http<{ data: Imovel[]; total: number; page: number; limit: number }>(
@@ -107,7 +92,7 @@ export const ImoveisAPI = {
     return this.getOne(idOrSlug);
   },
   create(payload: Partial<Imovel>) {
-    const token = localStorage.getItem("admin_token") || localStorage.getItem("token") || "";
+    const token = localStorage.getItem("admin_token") || "";
     return http<Imovel>("/api/imoveis", {
       method: "POST",
       body: JSON.stringify(payload),
@@ -115,7 +100,7 @@ export const ImoveisAPI = {
     });
   },
   update(id: string, payload: Partial<Imovel>) {
-    const token = localStorage.getItem("admin_token") || localStorage.getItem("token") || "";
+    const token = localStorage.getItem("admin_token") || "";
     return http<Imovel>(`/api/imoveis/${encodeURIComponent(id)}`, {
       method: "PUT",
       body: JSON.stringify(payload),
@@ -123,7 +108,7 @@ export const ImoveisAPI = {
     });
   },
   remove(id: string) {
-    const token = localStorage.getItem("admin_token") || localStorage.getItem("token") || "";
+    const token = localStorage.getItem("admin_token") || "";
     return http<{ ok: true }>(`/api/imoveis/${encodeURIComponent(id)}`, {
       method: "DELETE",
       authToken: token || undefined,
