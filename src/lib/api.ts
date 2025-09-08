@@ -1,30 +1,81 @@
 // src/lib/api.ts
-import axios from "axios";
+// Base da API a partir das ENVs públicas
+const RAW_BASE =
+  // Vite
+  (import.meta as any)?.env?.VITE_API_BASE ??
+  (import.meta as any)?.env?.VITE_API_URL ??
+  // Next.js
+  process?.env?.NEXT_PUBLIC_API_BASE ??
+  "";
 
-/**
- * Base API client
- * - Lê a URL do backend de VITE_API_URL (ex.: http://localhost:4000)
- * - Injeta Authorization: Bearer <token> quando existir em localStorage
- */
-export const http = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:4000",
-});
+export const API_BASE: string = String(RAW_BASE || "").replace(/\/+$/, ""); // remove barra final
 
-http.interceptors.request.use((config) => {
-  const token = localStorage.getItem("admin_token");
-  if (token) {
-    config.headers = config.headers || {};
-    (config.headers as any).Authorization = `Bearer ${token}`;
+type Json = Record<string, unknown>;
+type Query = Record<string, string | number | boolean | null | undefined>;
+
+function toQuery(q?: Query) {
+  if (!q) return "";
+  const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(q)) {
+    if (v === undefined || v === null) continue;
+    p.append(k, String(v));
   }
-  return config;
-});
+  const s = p.toString();
+  return s ? `?${s}` : "";
+}
 
+async function http<T>(
+  path: string,
+  init: RequestInit & { authToken?: string; query?: Query } = {}
+): Promise<T> {
+  const { authToken, query, headers, ...opts } = init;
+  if (!API_BASE) {
+    console.warn(
+      "[api] API_BASE não definida. Configure VITE_API_BASE (Vite) ou NEXT_PUBLIC_API_BASE (Next.js)."
+    );
+  }
+  // path sempre absoluto e sob /api (exceto healthz)
+  const p = path.startsWith("/") ? path : `/${path}`;
+  const url = `${API_BASE}${p}${toQuery(query)}`;
+
+  const res = await fetch(url, {
+    cache: (opts.cache as RequestCache) ?? "no-store",
+    ...opts,
+    headers: {
+      "Content-Type": "application/json",
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+      ...(headers || {}),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(`${res.status} ${res.statusText}${text ? ` – ${text}` : ""}`);
+  }
+
+  // tenta JSON, senão devolve texto
+  const txt = await res.text();
+  try {
+    return JSON.parse(txt) as T;
+  } catch {
+    return txt as T;
+  }
+}
+
+/* ---------------------------
+ * Endpoints utilitários
+ * ------------------------- */
+export const ping = () => http<string>("/healthz");
+
+/* ---------------------------
+ * Tipos
+ * ------------------------- */
 export type Imovel = {
   _id?: string;
-  slug?: string;
+  id?: string;
   titulo: string;
+  preco?: number;
   descricao?: string;
-  preco: number;
   endereco?: {
     cidade?: string;
     estado?: string;
@@ -32,75 +83,62 @@ export type Imovel = {
     logradouro?: string;
     numero?: string | number;
   };
-  caracteristicas?: {
-    quartos?: number;
-    banheiros?: number;
-    garagem?: number;
-    area_m2?: number;
-  };
-
-imagens?: string[];
-  createdAt?: string;
-  updatedAt?: string;
+  caracteristicas?: { quartos?: number; banheiros?: number; garagem?: number; area_m2?: number };
+  imagens?: string[] | Array<{ url: string; legenda?: string }>;
+  tipo?: string;
+  finalidade?: string;
 };
 
-export type ListaImoveisResponse = {
-  data: Imovel[];
-  total: number;
-  page: number;
-  limit: number;
-};
+export type ImovelType = Imovel;
 
+/* ---------------------------
+ * ImoveisAPI (usado nas páginas)
+ * ------------------------- */
 export const ImoveisAPI = {
-  // Público e Admin (listar com paginação e filtros)
-  async list(params?: {
-    page?: number;
-    limit?: number;
-    cidade?: string;
-    minPreco?: number;
-    maxPreco?: number;
-    quartos?: number;
-    q?: string;
-  }) {
-    const { data } = await http.get<ListaImoveisResponse>("/api/imoveis", {
-      params,
-    });
-    return data;
+  // GET /api/imoveis?page&limit
+  async list(params?: { page?: number; limit?: number }) {
+    return http<{ data: Imovel[]; total: number; page: number; limit: number }>(
+      "/api/imoveis",
+      { method: "GET", query: params }
+    );
   },
 
+  // GET /api/imoveis/:id
   async getOne(id: string) {
-    const { data } = await http.get<Imovel>(`/api/imoveis/${id}`);
-    return data;
+    return http<Imovel>(`/api/imoveis/${encodeURIComponent(id)}`, { method: "GET" });
   },
 
-  async create(payload: Imovel) {
-    const { data } = await http.post<Imovel>("/api/imoveis", payload);
-    return data;
+  // Alias (algumas telas tentam get por slug/id)
+  async get(idOrSlug: string) {
+    return this.getOne(idOrSlug);
   },
 
+  // POST /api/imoveis (requer token Bearer)
+  async create(payload: Partial<Imovel>) {
+    const token = localStorage.getItem("admin_token") || localStorage.getItem("token") || "";
+    return http<Imovel>("/api/imoveis", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      authToken: token || undefined,
+    });
+  },
+
+  // PUT /api/imoveis/:id (requer token Bearer)
   async update(id: string, payload: Partial<Imovel>) {
-    // Remova _id do body para não tentar atualizar o identificador
-    const { _id, ...clean } = (payload || {}) as any;
-
-    const { data } = await http.put<Imovel>(
-      `/api/imoveis/${id}`,
-      clean,
-      { headers: { "Content-Type": "application/json" } }
-    );
-    return data;
+    const token = localStorage.getItem("admin_token") || localStorage.getItem("token") || "";
+    return http<Imovel>(`/api/imoveis/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+      authToken: token || undefined,
+    });
   },
 
-
+  // DELETE /api/imoveis/:id (requer token Bearer)
   async remove(id: string) {
-    await http.delete(`/api/imoveis/${id}`);
-  },
-
-  // Admin Auth
-  async adminLogin(email: string, password: string) {
-    const { data } = await http.post<{ token: string }>(
-      "/api/admin/login",
-      { email, password }
-    );
-    return data;
+    const token = localStorage.getItem("admin_token") || localStorage.getItem("token") || "";
+    return http<{ ok: true }>(`/api/imoveis/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      authToken: token || undefined,
+    });
   },
 };
