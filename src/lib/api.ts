@@ -1,17 +1,24 @@
 // src/lib/api.ts
 
-// SOMENTE Vite (front no browser):
-// Leia as envs públicas a partir de import.meta.env
+// =========================
+// Base da API
+// =========================
+
+// Lê da ENV (Vite). Só variáveis que começam com VITE_ são expostas no browser.
+// Se não existir, usa fallback público (Render).
 const RAW_BASE =
-  // preferencial
   (import.meta as any)?.env?.VITE_API_BASE ??
-  // compat opcional se usou outro nome
   (import.meta as any)?.env?.VITE_API_URL ??
   "";
 
-// normaliza (sem barra final)
-export const API_BASE: string = String(RAW_BASE || "").replace(/\/+$/, "");
+const DEFAULT_BASE = "https://fullstack-imoveis-api.onrender.com";
 
+// normaliza removendo barra final
+export const API_BASE: string = String(RAW_BASE || DEFAULT_BASE).replace(/\/+$/, "");
+
+// =========================
+// Utils internos
+// =========================
 type Query = Record<string, string | number | boolean | null | undefined>;
 
 function toQuery(q?: Query) {
@@ -30,13 +37,6 @@ async function http<T>(
   init: RequestInit & { authToken?: string; query?: Query } = {}
 ): Promise<T> {
   const { authToken, query, headers, ...opts } = init;
-
-  if (!API_BASE) {
-    console.warn(
-      "[api] API_BASE não definida. Configure VITE_API_BASE nas envs da Vercel."
-    );
-  }
-
   const p = path.startsWith("/") ? path : `/${path}`;
   const url = `${API_BASE}${p}${toQuery(query)}`;
 
@@ -63,12 +63,15 @@ async function http<T>(
   try {
     return JSON.parse(txt) as T;
   } catch {
-    // @ts-expect-error devolver texto quando não for JSON
+    // quando não for JSON, devolve texto
+    // @ts-expect-error
     return txt as T;
   }
 }
 
-/* Tipos mínimos */
+// =========================
+// Tipos
+// =========================
 export type Imovel = {
   _id?: string;
   id?: string;
@@ -82,10 +85,14 @@ export type Imovel = {
   finalidade?: string;
 };
 
+// =========================
 // Endpoints utilitários
+// =========================
 export const ping = () => http<string>("/healthz");
 
-// API usada pelas telas
+// =========================
+// API usada nas telas
+// =========================
 export const ImoveisAPI = {
   list(params?: { page?: number; limit?: number }) {
     return http<{ data: Imovel[]; total: number; page: number; limit: number }>(
