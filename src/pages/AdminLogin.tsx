@@ -1,7 +1,6 @@
-// src/pages/AdminLogin.tsx
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { loginAdmin } from "@/lib/api";
+import { API_BASE } from "@/lib/api";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -16,8 +15,19 @@ export default function AdminLogin() {
     setErro(null);
     setLoading(true);
     try {
-      const { token } = await loginAdmin(email.trim(), password);
-      localStorage.setItem("admin_token", token);
+      const res = await fetch(`${API_BASE}/api/admin/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+      if (!res.ok) {
+        const msg = await res.text().catch(() => res.statusText);
+        throw new Error(`${res.status} ${msg || "Falha no login"}`);
+      }
+      const data = await res.json(); // deve ter { token }
+      if (!data?.token) throw new Error("Resposta sem token");
+      localStorage.setItem("admin_token", data.token);
+      console.log("[login] token salvo:", data.token); // debug
       const to = loc?.state?.from || "/admin";
       navigate(to, { replace: true });
     } catch (e: any) {
@@ -38,6 +48,7 @@ export default function AdminLogin() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           autoComplete="username"
+          required
         />
         <input
           className="border px-3 py-2"
@@ -46,6 +57,7 @@ export default function AdminLogin() {
           value={password}
           onChange={(e) => setPass(e.target.value)}
           autoComplete="current-password"
+          required
         />
         {erro && <p className="text-red-600">{erro}</p>}
         <button className="border px-4 py-2" disabled={loading}>
