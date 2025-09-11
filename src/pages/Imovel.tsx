@@ -32,7 +32,7 @@ import { Separator } from "../components/ui/separator";
 const CORRETOR = {
   nome: "Pedro de Toledo",
   whatsapp: "5516996137542",  
-  telefoneDisplay: "(16) 99613-7542", 
+  telefoneDisplay: "16) 99613-7542", 
   email: "pedro.toledo@creci.org.br",
 };
 const buildWhatsAppLink = (text: string) =>
