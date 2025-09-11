@@ -78,7 +78,7 @@ export default function Nav() {
               ref={logoRef}
               to="/"
               className="group select-none font-semibold tracking-tight text-neutral-800 hover:opacity-90 transition-opacity text-lg sm:text-xl flex items-center gap-2"
-              title="Toledo Imóveis"
+              title="Pedro de Toledo Corretor"
             >
               {/* Mini telhadinho integrado ao logotipo (reforço visual) */}
               <svg
@@ -88,8 +88,8 @@ export default function Nav() {
               >
                 <path d="M12 3l8 6h-2v9h-4v-6H10v6H6v-9H4l8-6z" />
               </svg>
-              <span className="font-bold">Toledo</span>
-              <span className="font-medium">Imóveis</span>
+              <span className="font-bold">Pedro de Toledo</span>
+              <span className="font-medium">Corretor</span>
             </Link>
 
             <nav className="ml-6 hidden sm:flex gap-6 text-sm text-neutral-600">

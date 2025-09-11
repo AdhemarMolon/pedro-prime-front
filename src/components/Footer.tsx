@@ -26,7 +26,7 @@ export default function Footer() {
         <div className="flex flex-col gap-2 mb-8">
           <div className="flex items-center gap-3">
             <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-            <h3 className="text-xl font-bold tracking-tight">Toledo Imóveis</h3>
+            <h3 className="text-xl font-bold tracking-tight"> Pedro de Toledo Corretor </h3>
           </div>
           <p className="text-sm text-white/90">
             Por <span className="font-semibold">Pedro de Toledo</span>, corretor
@@ -92,7 +92,7 @@ export default function Footer() {
       {/* Barra inferior + crédito pequeno */}
       <div className="border-t border-white/10">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <span className="text-xs text-white/70">© {YEAR} Toledo Imóveis</span>
+          <span className="text-xs text-white/70">© {YEAR}  Pedro de Toledo Corretor </span>
 
           <a
             href="https://adhemarmolon.github.io/portfolio/"
