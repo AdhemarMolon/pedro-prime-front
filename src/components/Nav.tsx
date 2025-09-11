@@ -77,16 +77,16 @@ export default function Nav() {
             <Link
               ref={logoRef}
               to="/"
-              className="group select-none font-semibold tracking-tight text-neutral-800 hover:opacity-90 transition-opacity text-lg sm:text-xl flex items-center gap-2"
+              className="group select-none font-semibold tracking-tight text-neutral-800 hover:opacity-90 transition-opacity text-sm sm:text-base flex items-center gap-2"
               title="Pedro de Toledo Corretor"
             >
               {/* Mini telhadinho integrado ao logotipo (reforço visual) */}
               <svg
-                viewBox="0 0 24 24"
-                className="h-5 w-5 text-blue-600 transition-transform group-hover:-translate-y-0.5"
-                fill="currentColor"
+              viewBox="0 0 24 24"
+              className="h-5 w-5 text-blue-600 transition-transform group-hover:-translate-y-0.5"
+              fill="currentColor"
               >
-                <path d="M12 3l8 6h-2v9h-4v-6H10v6H6v-9H4l8-6z" />
+              <path d="M12 3l8 6h-2v9h-4v-6H10v6H6v-9H4l8-6z" />
               </svg>
               <span className="font-bold">Pedro de Toledo Corretor</span>
             </Link>
