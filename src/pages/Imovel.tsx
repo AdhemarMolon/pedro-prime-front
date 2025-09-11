@@ -31,8 +31,8 @@ import { Separator } from "../components/ui/separator";
 /** Contato fixo */
 const CORRETOR = {
   nome: "Pedro de Toledo",
-  whatsapp: "5516996137542",  
-  telefoneDisplay: "16) 99613-7542", 
+  whatsapp: "5516996137532",  
+  telefoneDisplay: "(16) 99613-7532", 
   email: "pedro.toledo@creci.org.br",
 };
 const buildWhatsAppLink = (text: string) =>
