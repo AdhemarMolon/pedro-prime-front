@@ -88,8 +88,7 @@ export default function Nav() {
               >
                 <path d="M12 3l8 6h-2v9h-4v-6H10v6H6v-9H4l8-6z" />
               </svg>
-              <span className="font-bold">Pedro de Toledo</span>
-              <span className="font-medium">Corretor</span>
+              <span className="font-bold">Pedro de Toledo Corretor</span>
             </Link>
 
             <nav className="ml-6 hidden sm:flex gap-6 text-sm text-neutral-600">
