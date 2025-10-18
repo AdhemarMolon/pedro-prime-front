@@ -321,7 +321,7 @@ export default function AdminImoveis() {
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
                             <Button
-                              onClick={() => window.open(`/imovel/${id}`, '_blank')}
+                              onClick={() => window.open(`/imoveis/${id}`, '_blank')}
                               variant="ghost"
                               size="sm"
                               className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
