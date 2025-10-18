@@ -24,7 +24,7 @@ export default function Home() {
   // Busca e filtros
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  const [filterTipo, setFilterTipo] = useState("todos");
+  const [sortBy, setSortBy] = useState("relevancia");
   const [filterCidade, setFilterCidade] = useState("todos");
   const [filterPrecoMin, setFilterPrecoMin] = useState("");
   const [filterPrecoMax, setFilterPrecoMax] = useState("");
@@ -50,17 +50,12 @@ export default function Home() {
   }, []);
 
   // Opções únicas para filtros
-  const tiposDisponiveis = useMemo(() => {
-    const tipos = new Set(items.map(getTipo).filter(Boolean));
-    return Array.from(tipos).sort();
-  }, [items]);
-
   const cidadesDisponiveis = useMemo(() => {
     const cidades = new Set(items.map(getCidade).filter(Boolean));
     return Array.from(cidades).sort();
   }, [items]);
 
-  // Filtros aplicados
+  // Filtros e ordenação
   const filteredItems = useMemo(() => {
     let result = [...items];
 
@@ -72,10 +67,6 @@ export default function Home() {
         getCidade(item).includes(search) ||
         item.descricao?.toLowerCase().includes(search)
       );
-    }
-
-    if (filterTipo !== "todos") {
-      result = result.filter(item => getTipo(item) === filterTipo);
     }
 
     if (filterCidade !== "todos") {
@@ -98,13 +89,46 @@ export default function Home() {
       result = result.filter(item => getArea(item) >= Number(filterAreaMin));
     }
 
-    return result;
-  }, [items, searchTerm, filterTipo, filterCidade, filterPrecoMin, filterPrecoMax, filterQuartos, filterAreaMin]);
+    // Ordenação
+    switch (sortBy) {
+      case "mais-recente":
+        result.sort((a, b) => {
+          const dateA = a._id || a.id || "";
+          const dateB = b._id || b.id || "";
+          return String(dateB).localeCompare(String(dateA));
+        });
+        break;
+      case "mais-antigo":
+        result.sort((a, b) => {
+          const dateA = a._id || a.id || "";
+          const dateB = b._id || b.id || "";
+          return String(dateA).localeCompare(String(dateB));
+        });
+        break;
+      case "menor-preco":
+        result.sort((a, b) => getPreco(a) - getPreco(b));
+        break;
+      case "maior-preco":
+        result.sort((a, b) => getPreco(b) - getPreco(a));
+        break;
+      case "menor-area":
+        result.sort((a, b) => getArea(a) - getArea(b));
+        break;
+      case "maior-area":
+        result.sort((a, b) => getArea(b) - getArea(a));
+        break;
+      default:
+        // relevancia - sem ordenação específica
+        break;
+    }
 
-  const hasActiveFilters = filterTipo !== "todos" || filterCidade !== "todos" || filterPrecoMin || filterPrecoMax || filterQuartos !== "todos" || filterAreaMin;
+    return result;
+  }, [items, searchTerm, sortBy, filterCidade, filterPrecoMin, filterPrecoMax, filterQuartos, filterAreaMin]);
+
+  const hasActiveFilters = sortBy !== "relevancia" || filterCidade !== "todos" || filterPrecoMin || filterPrecoMax || filterQuartos !== "todos" || filterAreaMin;
 
   const clearFilters = () => {
-    setFilterTipo("todos");
+    setSortBy("relevancia");
     setFilterCidade("todos");
     setFilterPrecoMin("");
     setFilterPrecoMax("");
@@ -113,7 +137,7 @@ export default function Home() {
   };
 
   const activeFiltersCount = [
-    filterTipo !== "todos",
+    sortBy !== "relevancia",
     filterCidade !== "todos",
     filterPrecoMin,
     filterPrecoMax,
@@ -210,20 +234,21 @@ export default function Home() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Tipo */}
+                {/* Ordenar por */}
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Tipo</label>
-                  <Select value={filterTipo} onValueChange={setFilterTipo}>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Ordenar por</label>
+                  <Select value={sortBy} onValueChange={setSortBy}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="todos">Todos</SelectItem>
-                      {tiposDisponiveis.map(tipo => (
-                        <SelectItem key={tipo} value={tipo} className="capitalize">
-                          {tipo}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="relevancia">Relevância</SelectItem>
+                      <SelectItem value="mais-recente">Mais Recentes</SelectItem>
+                      <SelectItem value="mais-antigo">Mais Antigos</SelectItem>
+                      <SelectItem value="menor-preco">Menor Preço</SelectItem>
+                      <SelectItem value="maior-preco">Maior Preço</SelectItem>
+                      <SelectItem value="menor-area">Menor Área</SelectItem>
+                      <SelectItem value="maior-area">Maior Área</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

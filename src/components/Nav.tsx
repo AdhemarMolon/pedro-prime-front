@@ -101,28 +101,16 @@ export default function Nav() {
             </nav>
           </div>
 
-          {/* Coluna direita (espaço do corretor + ações/admin) */}
+          {/* Coluna direita - vazia, mantém layout simétrico */}
           <div className="flex items-center justify-end gap-3">
-
-
-            {isAdmin ? (
-              <>
-                <Link
-                  to="/admin/imoveis"
-                  className="text-sm font-medium text-blue-600 hover:underline"
-                >
-                  Área Admin
-                </Link>
-                <button
-                  onClick={logout}
-                  className="text-sm underline text-gray-600 hover:text-red-600"
-                >
-                  Sair
-                </button>
-              </>
-            ) : (
-              // Mantém altura/estrutura sem poluir a UI
-              <span className="text-xs text-transparent select-none">.</span>
+            {isAdmin && (
+              <button
+                onClick={logout}
+                className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                title="Sair da área admin"
+              >
+                Sair
+              </button>
             )}
           </div>
         </div>

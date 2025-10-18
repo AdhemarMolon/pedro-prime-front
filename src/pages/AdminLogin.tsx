@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { API_BASE } from "@/lib/api";
+import { useAdmin } from "@/context/AdminContext";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -13,7 +13,8 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const navigate = useNavigate();
-  const loc = useLocation() as any;
+  const location = useLocation() as { state?: { from?: string } };
+  const { login } = useAdmin();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -21,28 +22,16 @@ export default function AdminLogin() {
     setLoading(true);
     
     try {
-      const res = await fetch(`${API_BASE}/api/admin/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
-      });
+      await login(email.trim(), password);
       
-      if (!res.ok) {
-        const msg = await res.text().catch(() => res.statusText);
-        throw new Error(msg || "Credenciais inválidas");
-      }
+      // Navega para a página de destino após login bem-sucedido
+      const to = location?.state?.from || "/admin";
       
-      const data = await res.json();
+      // Força um reload para garantir que o contexto foi atualizado
+      window.location.href = to;
       
-      if (!data?.token) {
-        throw new Error("Resposta inválida do servidor");
-      }
-      
-      localStorage.setItem("admin_token", data.token);
-      const to = loc?.state?.from || "/admin";
-      navigate(to, { replace: true });
-      
-    } catch (e: any) {
+    } catch (error) {
+      const e = error as Error;
       setErro(e?.message ?? "Erro ao fazer login. Verifique suas credenciais.");
     } finally {
       setLoading(false);
@@ -86,7 +75,7 @@ export default function AdminLogin() {
                 </label>
                 <Input
                   type="email"
-                  placeholder="admin@pedro.com"
+                  placeholder="seu-email@exemplo.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="username"
@@ -141,17 +130,6 @@ export default function AdminLogin() {
                 )}
               </Button>
             </form>
-
-            {/* Credenciais de Demo */}
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-              <p className="text-xs text-gray-600 text-center mb-2 font-medium">
-                Credenciais de Acesso:
-              </p>
-              <div className="text-xs text-gray-700 space-y-1">
-                <p><strong>Email:</strong> admin@pedro.com</p>
-                <p><strong>Senha:</strong> admin123</p>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
