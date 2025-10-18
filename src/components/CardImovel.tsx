@@ -117,7 +117,7 @@ export default function CardImovel({ imovel, viewMode = "grid" }: CardImovelProp
   const displayTags = tags.slice(0, 2);
 
   return (
-    <Link to={`/imovel/${id}`} className="block group">
+    <Link to={`/imoveis/${id}`} className="block group">
       <Card className={`
         overflow-hidden border-0 shadow-md transition-all duration-300 bg-white
         hover:shadow-xl hover:-translate-y-1

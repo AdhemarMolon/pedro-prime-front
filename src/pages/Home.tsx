@@ -26,8 +26,6 @@ export default function Home() {
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("relevancia");
   const [filterCidade, setFilterCidade] = useState("todos");
-  const [filterPrecoMin, setFilterPrecoMin] = useState("");
-  const [filterPrecoMax, setFilterPrecoMax] = useState("");
   const [filterQuartos, setFilterQuartos] = useState("todos");
   const [filterAreaMin, setFilterAreaMin] = useState("");
 
@@ -73,14 +71,6 @@ export default function Home() {
       result = result.filter(item => getCidade(item) === filterCidade);
     }
 
-    if (filterPrecoMin) {
-      result = result.filter(item => getPreco(item) >= Number(filterPrecoMin));
-    }
-
-    if (filterPrecoMax) {
-      result = result.filter(item => getPreco(item) <= Number(filterPrecoMax));
-    }
-
     if (filterQuartos !== "todos") {
       result = result.filter(item => getQuartos(item) >= Number(filterQuartos));
     }
@@ -123,15 +113,13 @@ export default function Home() {
     }
 
     return result;
-  }, [items, searchTerm, sortBy, filterCidade, filterPrecoMin, filterPrecoMax, filterQuartos, filterAreaMin]);
+  }, [items, searchTerm, sortBy, filterCidade, filterQuartos, filterAreaMin]);
 
-  const hasActiveFilters = sortBy !== "relevancia" || filterCidade !== "todos" || filterPrecoMin || filterPrecoMax || filterQuartos !== "todos" || filterAreaMin;
+  const hasActiveFilters = sortBy !== "relevancia" || filterCidade !== "todos" || filterQuartos !== "todos" || filterAreaMin;
 
   const clearFilters = () => {
     setSortBy("relevancia");
     setFilterCidade("todos");
-    setFilterPrecoMin("");
-    setFilterPrecoMax("");
     setFilterQuartos("todos");
     setFilterAreaMin("");
   };
@@ -139,8 +127,6 @@ export default function Home() {
   const activeFiltersCount = [
     sortBy !== "relevancia",
     filterCidade !== "todos",
-    filterPrecoMin,
-    filterPrecoMax,
     filterQuartos !== "todos",
     filterAreaMin
   ].filter(Boolean).length;
@@ -286,28 +272,6 @@ export default function Home() {
                       <SelectItem value="4">4+</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-
-                {/* Preço Mínimo */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Preço Mínimo</label>
-                  <Input
-                    type="number"
-                    placeholder="R$ 0"
-                    value={filterPrecoMin}
-                    onChange={(e) => setFilterPrecoMin(e.target.value)}
-                  />
-                </div>
-
-                {/* Preço Máximo */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Preço Máximo</label>
-                  <Input
-                    type="number"
-                    placeholder="R$ 0"
-                    value={filterPrecoMax}
-                    onChange={(e) => setFilterPrecoMax(e.target.value)}
-                  />
                 </div>
 
                 {/* Área Mínima */}
