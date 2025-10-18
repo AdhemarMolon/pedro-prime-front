@@ -1,0 +1,142 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enum de Status do Imóvel
+enum StatusImovel {
+  DISPONIVEL
+  VENDIDO
+  ALUGADO
+  RESERVADO
+}
+
+// Enum de Tipo de Imóvel
+enum TipoImovel {
+  CASA
+  APARTAMENTO
+  TERRENO
+  COMERCIAL
+  RURAL
+  SOBRADO
+  KITNET
+  CHACARA
+}
+
+// Enum de Finalidade
+enum FinalidadeImovel {
+  VENDA
+  ALUGUEL
+  VENDA_ALUGUEL
+}
+
+// Enum de Tags Predefinidas
+enum TagImovel {
+  DESTAQUE
+  LANCAMENTO
+  OPORTUNIDADE
+  ACEITA_FINANCIAMENTO
+  ACEITA_PERMUTA
+  PRONTO_MORAR
+  NA_PLANTA
+  MOBILIADO
+  PISCINA
+  AREA_GOURMET
+  QUINTAL
+  GARAGEM_COBERTA
+  PROXIMO_METRO
+  CONDOMINIO_FECHADO
+  VISTA_MAR
+  VISTA_MONTANHA
+  PET_FRIENDLY
+  ENERGIA_SOLAR
+}
+
+// Model do Imóvel
+model Imovel {
+  id          String            @id @default(cuid())
+  titulo      String
+  descricao   String?           @db.Text
+  preco       Decimal           @db.Decimal(12, 2)
+  tipo        TipoImovel
+  finalidade  FinalidadeImovel
+  status      StatusImovel      @default(DISPONIVEL)
+  
+  // Tags (enum predefinido)
+  tags        TagImovel[]
+  
+  // Endereço
+  logradouro  String?
+  numero      String?
+  complemento String?
+  bairro      String
+  cidade      String
+  estado      String            @default("SP")
+  cep         String?
+  
+  // Características
+  quartos     Int?
+  banheiros   Int?
+  suites      Int?
+  garagem     Int?
+  area_m2     Decimal?          @db.Decimal(10, 2)
+  area_total  Decimal?          @db.Decimal(10, 2)
+  
+  // Imagens (JSON array de URLs)
+  imagens     Json?             @default("[]")
+  
+  // Metadados
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  createdBy   String?
+  ativo       Boolean           @default(true)
+  
+  // Relacionamentos
+  admin       Admin?            @relation(fields: [createdBy], references: [id])
+  
+  @@index([cidade])
+  @@index([tipo])
+  @@index([finalidade])
+  @@index([status])
+  @@index([bairro])
+  @@map("imoveis")
+}
+
+// Model do Admin
+model Admin {
+  id        String    @id @default(cuid())
+  nome      String
+  email     String    @unique
+  senha     String
+  ativo     Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  // Relacionamentos
+  imoveis   Imovel[]
+  
+  @@map("admins")
+}
+
+// Model de Log de Ações (para auditoria)
+model LogAcao {
+  id        String   @id @default(cuid())
+  adminId   String?
+  acao      String   // "CRIAR", "EDITAR", "EXCLUIR", "LOGIN"
+  entidade  String?  // "IMOVEL", "ADMIN"
+  detalhes  String?  @db.Text
+  ip        String?
+  createdAt DateTime @default(now())
+  
+  @@index([adminId])
+  @@index([acao])
+  @@index([createdAt])
+  @@map("logs_acoes")
+}

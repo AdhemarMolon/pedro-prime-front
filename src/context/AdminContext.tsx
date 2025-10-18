@@ -11,6 +11,7 @@ import { ImoveisAPI } from "../lib/api";
 
 type AdminContextType = {
   isAuth: boolean;
+  isAdmin: boolean; // Alias para isAuth
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 };
@@ -34,7 +35,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ isAuth: !!token, login, logout }),
+    () => ({ isAuth: !!token, isAdmin: !!token, login, logout }),
     [token, login, logout]
   );
 

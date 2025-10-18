@@ -1,9 +1,10 @@
 # Pedro de Toledo Imóveis
 
-Site imobiliário moderno e responsivo desenvolvido com React, TypeScript e Tailwind CSS. Interface completa para busca de imóveis e painel administrativo.
+Site imobiliário moderno e responsivo desenvolvido com React, TypeScript, Tailwind CSS e PostgreSQL (Neon). Interface completa para busca de imóveis com sistema de tags e painel administrativo.
 
 ## 🚀 Tecnologias
 
+### Frontend
 - **React 18** - Framework frontend
 - **TypeScript** - Tipagem estática
 - **Vite** - Build tool ultrarrápido
@@ -11,6 +12,11 @@ Site imobiliário moderno e responsivo desenvolvido com React, TypeScript e Tail
 - **React Router** - Roteamento do lado do cliente
 - **Shadcn/ui** - Componentes de interface
 - **Lucide React** - Ícones modernos
+
+### Backend & Database
+- **Neon PostgreSQL** - Banco de dados serverless (região: São Paulo)
+- **Prisma ORM** - Client type-safe para banco de dados
+- **Vercel** - Hosting e deploy automático
 
 ## 🎨 Design System
 
@@ -23,17 +29,21 @@ Site imobiliário moderno e responsivo desenvolvido com React, TypeScript e Tail
 ## 📱 Funcionalidades
 
 ### Área Pública
-- **Home**: Hero section, filtros avançados, grid de imóveis com paginação
-- **Detalhes do Imóvel**: Galeria de imagens, características completas, formulário de contato
-- **Busca e Filtros**: Por cidade, quartos, preço, texto livre
+- **Home**: Hero section com busca, filtros avançados, grid de imóveis com paginação
+- **Detalhes do Imóvel**: Galeria de imagens, características completas, tags, compartilhamento social
+- **Busca e Filtros**: Por tipo, cidade, bairro, quartos, preço, área, tags
+- **Sistema de Tags**: 18 tags predefinidas (Destaque, Lançamento, Aceita Financiamento, etc.)
+- **WhatsApp**: Botão flutuante + CTAs diretos para contato
+- **SEO**: Meta tags completas, Open Graph, Twitter Cards, Schema.org
+- **Breadcrumbs**: Navegação facilitada
 - **Estados visuais**: Loading skeletons, estado vazio, tratamento de erro
-- **Integração WhatsApp**: CTAs diretos para contato
 
 ### Área Administrativa
-- **Login**: Tela de autenticação (credenciais de demo)
-- **Lista de Imóveis**: Tabela com busca, filtros e ações
-- **Formulário**: Criar/editar imóveis com validação completa
-- **Estados simulados**: Loading, sucesso, erro
+- **Login**: Autenticação com JWT
+- **Lista de Imóveis**: Tabela com todos os imóveis (incluindo rascunhos e vendidos)
+- **Formulário**: Criar/editar imóveis com seletor visual de tags
+- **Upload de Imagens**: Múltiplas imagens por imóvel
+- **Logs de Ações**: Rastreamento de alterações
 
 ## 🏗️ Estrutura do Projeto
 
@@ -42,33 +52,96 @@ src/
 ├── components/          # Componentes reutilizáveis
 │   ├── ui/             # Componentes base (shadcn)
 │   ├── Nav.tsx         # Navegação principal
-│   ├── Hero.tsx        # Seção hero
+│   ├── Hero.tsx        # Hero com busca
 │   ├── CardImovel.tsx  # Card de imóvel
-│   ├── Filtros.tsx     # Filtros de busca
+│   ├── Filtros.tsx     # Filtros avançados
 │   ├── FormContato.tsx # Formulário de contato
-│   └── ...
+│   ├── TagSelector.tsx # Seletor visual de tags
+│   ├── WhatsAppButton.tsx # Botão flutuante
+│   ├── Breadcrumbs.tsx # Navegação breadcrumb
+│   └── ShareButtons.tsx # Compartilhamento social
 ├── pages/              # Páginas da aplicação
-│   ├── Home.tsx        # Página inicial
+│   ├── Home.tsx        # Página inicial com filtros
 │   ├── Imovel.tsx      # Detalhes do imóvel
+│   ├── Sobre.tsx       # Sobre o corretor
 │   ├── AdminLogin.tsx  # Login administrativo
 │   ├── AdminImoveis.tsx # Lista admin
 │   └── AdminImovelForm.tsx # Formulário admin
-├── mocks/              # Dados simulados
-│   └── imoveis.ts      # Mock de imóveis
+├── lib/                # Utilitários
+│   ├── api.ts          # Client de API
+│   ├── utils.ts        # Funções auxiliares
+│   └── constants.ts    # Tags e enums centralizados
 ├── hooks/              # Custom hooks
-└── lib/                # Utilitários
+└── context/            # Contexts React
+
+prisma/
+├── schema.prisma       # Schema do banco (Imovel, Admin, LogAcao)
+└── migrations/         # Histórico de migrations
+
+scripts/
+├── migrate-data.ts     # Migração MongoDB → PostgreSQL
+└── export-mongodb.ts   # Exportar dados do MongoDB
 ```
 
 ## 🚀 Como executar
 
 ### Pré-requisitos
 - Node.js 18+ 
-- npm ou yarn
+- npm ou bun
+- Conta no [Neon](https://neon.tech) (PostgreSQL)
 
-### Instalação
+### Instalação Local
 
 ```bash
 # Clone o repositório
+git clone https://github.com/AdhemarMolon/pedro-prime-front.git
+cd pedro-prime-front
+
+# Instale as dependências
+npm install
+
+# Configure as variáveis de ambiente
+cp .env.example .env
+# Edite .env com suas credenciais do Neon
+
+# Gere o Prisma Client
+npm run db:generate
+
+# Execute as migrations
+npm run db:migrate
+
+# (Opcional) Migre dados existentes
+npm run export  # Exporta do MongoDB
+npm run migrate # Migra para Neon
+
+# Inicie o servidor de desenvolvimento
+npm run dev
+```
+
+Acesse: http://localhost:5173
+
+### 🌐 Deploy no Vercel
+
+**Quick Start:**
+```bash
+# 1. Commit e push
+git push origin main
+
+# 2. Importe no Vercel
+# https://vercel.com/new
+
+# 3. Configure variáveis de ambiente
+# DATABASE_URL_POOLED, JWT_SECRET, etc.
+```
+
+**Documentação completa:** Veja `QUICK_START_VERCEL.md` e `DEPLOY_VERCEL.md`
+
+## 📚 Documentação Adicional
+
+- 📖 **[GUIA_MIGRACAO.md](./GUIA_MIGRACAO.md)** - Guia completo de migração MongoDB → PostgreSQL
+- 📄 **[RESUMO_SQL_TAGS.md](./RESUMO_SQL_TAGS.md)** - Resumo executivo da migração
+- 🚀 **[QUICK_START_VERCEL.md](./QUICK_START_VERCEL.md)** - Deploy rápido no Vercel
+- 📘 **[DEPLOY_VERCEL.md](./DEPLOY_VERCEL.md)** - Documentação completa de deploy
 git clone <URL_DO_REPOSITORIO>
 
 # Entre na pasta do projeto

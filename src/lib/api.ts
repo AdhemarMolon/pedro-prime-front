@@ -48,8 +48,7 @@ async function http<T>(
   try {
     return JSON.parse(txt) as T;
   } catch {
-    // @ts-expect-error texto puro (ex.: /healthz)
-    return txt as T;
+    return txt as unknown as T;
   }
 }
 
@@ -71,11 +70,25 @@ export type Imovel = {
   titulo: string;
   preco?: number;
   descricao?: string;
-  endereco?: { cidade?: string; estado?: string; bairro?: string; logradouro?: string; numero?: string | number };
-  caracteristicas?: { quartos?: number; banheiros?: number; garagem?: number; area_m2?: number };
-  imagens?: string[] | Array<{ url: string; legenda?: string }>;
+  // Novo schema (Prisma)
+  cidade?: string;
+  estado?: string;
+  bairro?: string;
+  logradouro?: string;
+  numero?: string;
+  cep?: string;
+  quartos?: number;
+  banheiros?: number;
+  garagem?: number;
+  area_m2?: number;
   tipo?: string;
   finalidade?: string;
+  tags?: string[];
+  imagens?: string[] | Array<{ url: string; legenda?: string }>;
+  // Schema antigo (MongoDB - manter compatibilidade)
+  endereco?: { cidade?: string; estado?: string; bairro?: string; logradouro?: string; numero?: string | number };
+  caracteristicas?: { quartos?: number; banheiros?: number; garagem?: number; area_m2?: number };
+  area?: number; // Alias para area_m2
 };
 
 export const ImoveisAPI = {
@@ -112,6 +125,12 @@ export const ImoveisAPI = {
     return http<{ ok: true }>(`/api/imoveis/${encodeURIComponent(id)}`, {
       method: "DELETE",
       authToken: token || undefined,
+    });
+  },
+  adminLogin(email: string, password: string) {
+    return http<{ token: string }>("/api/admin/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
     });
   },
 };

@@ -22,11 +22,13 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { ImoveisAPI, ImovelType } from "../lib/api";
+import type { Imovel } from "../lib/api";
+import { ImoveisAPI } from "../lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Separator } from "../components/ui/separator";
+import ShareButtons from "../components/ShareButtons";
 
 /** Contato fixo */
 const CORRETOR = {
@@ -40,43 +42,33 @@ const buildWhatsAppLink = (text: string) =>
 const buildTelLink = () => `tel:+${CORRETOR.whatsapp}`;
 
 /** Normaliza o shape e as imagens (strings → {url,legenda}) */
-function normalizeImovel(raw: any | null | undefined): ImovelType | null {
+function normalizeImovel(raw: Imovel | null | undefined): (Imovel & { imagens: Array<{ url: string; legenda: string }> }) | null {
   if (!raw) return null;
-  const id = raw._id ?? raw.id ?? raw.uuid ?? raw.slug ?? null;
-  const cidade = raw.cidade ?? raw?.endereco?.cidade ?? raw?.localidade ?? "";
-  const area = raw.area ?? raw?.caracteristicas?.area_m2 ?? raw?.caracteristicas?.area ?? undefined;
-  const quartos = raw.quartos ?? raw?.caracteristicas?.quartos ?? undefined;
-  const banheiros = raw.banheiros ?? raw?.caracteristicas?.banheiros ?? undefined;
-  const vagas = raw.vagas ?? raw?.caracteristicas?.garagem ?? raw?.garagem ?? undefined;
-
-  const imagensRaw = raw.imagens ?? raw.fotos ?? raw.images ?? [];
+  
+  const imagensRaw = raw.imagens ?? [];
   const imagens = Array.isArray(imagensRaw)
-    ? imagensRaw.map((img: any) =>
+    ? imagensRaw.map((img) =>
         typeof img === "string"
           ? { url: img, legenda: "" }
-          : { url: img?.url ?? img?.src ?? "", legenda: img?.legenda ?? "" }
+          : { url: img?.url ?? "", legenda: img?.legenda ?? "" }
       )
     : [];
 
   return {
     ...raw,
-    _id: raw._id ?? id ?? undefined,
-    id: id ?? undefined,
-    titulo: raw.titulo ?? raw.nome ?? raw.title ?? "Imóvel",
-    preco: Number(raw.preco ?? raw.valor ?? 0),
-    cidade,
-    area,
-    quartos,
-    banheiros,
-    vagas,
     imagens,
-    tipo: raw.tipo ?? raw.categoria ?? raw.finalidade,
-  } as ImovelType;
+  };
 }
+
+// Helpers para acessar propriedades do imóvel
+const getCidade = (i: Imovel) => i.endereco?.cidade ?? "";
+const getArea = (i: Imovel) => i.caracteristicas?.area_m2 ?? 0;
+const getImageUrl = (img: string | { url: string; legenda?: string }) => 
+  typeof img === "string" ? img : img.url;
 
 export default function Imovel() {
   const { id } = useParams();
-  const [item, setItem] = useState<ImovelType | null>(null);
+  const [item, setItem] = useState<(Imovel & { imagens: Array<{ url: string; legenda: string }> }) | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFavorited, setIsFavorited] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -124,14 +116,18 @@ export default function Imovel() {
     (async () => {
       setLoading(true);
       try {
-        let data: any = null;
+        let data: Imovel | null = null;
         try {
           data = await ImoveisAPI.get(id);
-        } catch {}
+        } catch {
+          // Silently fail and try alternative
+        }
         if (!data) {
           try {
             data = await ImoveisAPI.getOne(id);
-          } catch {}
+          } catch {
+            // Silently fail
+          }
         }
 
         const normalized = normalizeImovel(data);
@@ -230,7 +226,10 @@ export default function Imovel() {
           text: `Confira este imóvel: ${item.titulo}`,
           url: window.location.href,
         });
-      } catch {}
+      } catch (err) {
+        // User cancelled or share not available
+        console.log('Share cancelled');
+      }
     } else {
       navigator.clipboard.writeText(window.location.href);
     }
@@ -252,10 +251,10 @@ export default function Imovel() {
   };
 
   const propertyFeatures = [
-    { icon: Ruler, label: "Área", value: item.area ? `${item.area} m²` : null },
-    { icon: Bed, label: "Quartos", value: item.quartos || null },
-    { icon: Bath, label: "Banheiros", value: item.banheiros || null },
-    { icon: Car, label: "Vagas", value: item.vagas || null },
+    { icon: Ruler, label: "Área", value: item.caracteristicas?.area_m2 ? `${item.caracteristicas.area_m2} m²` : null },
+    { icon: Bed, label: "Quartos", value: item.caracteristicas?.quartos || null },
+    { icon: Bath, label: "Banheiros", value: item.caracteristicas?.banheiros || null },
+    { icon: Car, label: "Vagas", value: item.caracteristicas?.garagem || null },
   ].filter((f) => f.value !== null);
 
   // ---- Lightbox helpers ----
@@ -308,15 +307,10 @@ export default function Imovel() {
                 />
                 {isFavorited ? "Favoritado" : "Favoritar"}
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleShare}
-                className="hover:bg-blue-50 hover:text-blue-700 hover:scale-105 transition-all duration-200"
-              >
-                <Share2 className="h-4 w-4 mr-2" />
-                Compartilhar
-              </Button>
+              <ShareButtons 
+                title={item.titulo}
+                description={`${item.tipo ? item.tipo + ' - ' : ''}${item.cidade}. Preço: R$ ${item.preco.toLocaleString('pt-BR')}`}
+              />
             </div>
           </div>
         </div>

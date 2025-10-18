@@ -95,14 +95,9 @@ export default function Nav() {
               <Link className="hover:text-neutral-900" to="/imoveis">
                 Imóveis
               </Link>
-              <a
-                className="hover:text-neutral-900"
-                href="https://pedro-toled0.github.io/imoveis/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <Link className="hover:text-neutral-900" to="/sobre">
                 Sobre
-              </a>
+              </Link>
             </nav>
           </div>
 

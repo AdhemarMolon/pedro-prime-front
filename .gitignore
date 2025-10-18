@@ -22,3 +22,32 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# ========================================
+# 🔒 ARQUIVOS SENSÍVEIS
+# ========================================
+
+# Environment variables (NUNCA COMMITAR!)
+.env
+.env.local
+.env.production
+.env.development
+.env.*.local
+.env.vercel  # Arquivo de referência para deploy
+
+# Prisma
+prisma/.env
+
+# Backup de dados (podem conter informações sensíveis)
+backup-*.json
+*.backup
+
+# Chaves e certificados
+*.pem
+*.key
+*.cert
+
+# Database dumps
+*.sql
+*.db
+*.sqlite

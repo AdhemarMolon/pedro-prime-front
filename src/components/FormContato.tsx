@@ -84,38 +84,45 @@ const FormContato = ({ imovelTitulo, className = '' }: FormContatoProps) => {
     setLoading(true);
     setSuccess(false);
 
-    // Simular envio do formulário
+    // Enviar via WhatsApp
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const whatsappNumber = '5516997527532';
+      const message = `*Nova mensagem do site*\n\n` +
+        `*Nome:* ${formData.nome}\n` +
+        `*Email:* ${formData.email}\n` +
+        `*Telefone:* ${formData.telefone}\n` +
+        `${imovelTitulo ? `*Imóvel:* ${imovelTitulo}\n` : ''}` +
+        `\n*Mensagem:*\n${formData.mensagem}`;
 
-      // Simular sucesso/erro aleatório (90% de chance de sucesso)
-      const sucesso = Math.random() > 0.1;
+      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+      
+      // Abrir WhatsApp
+      window.open(whatsappUrl, '_blank');
 
-      if (sucesso) {
-        setSuccess(true);
-        toast({
-          title: "Mensagem enviada com sucesso!",
-          description: "Entraremos em contato em até 2 horas úteis. Obrigado pelo interesse!",
+      // Aguardar um pouco para dar tempo do usuário ver a ação
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      setSuccess(true);
+      toast({
+        title: "Redirecionado para WhatsApp!",
+        description: "Continue a conversa pelo WhatsApp para receber um atendimento mais rápido.",
+      });
+
+      // Resetar formulário após 3 segundos
+      setTimeout(() => {
+        setFormData({
+          nome: '',
+          email: '',
+          telefone: '',
+          mensagem: ''
         });
-
-        // Resetar formulário após 3 segundos
-        setTimeout(() => {
-          setFormData({
-            nome: '',
-            email: '',
-            telefone: '',
-            mensagem: ''
-          });
-          setSuccess(false);
-        }, 3000);
-      } else {
-        throw new Error('Erro simulado');
-      }
+        setSuccess(false);
+      }, 3000);
 
     } catch (error) {
       toast({
-        title: "Erro ao enviar mensagem",
-        description: "Tente novamente em alguns minutos ou entre em contato por telefone: (11) 99999-9999",
+        title: "Erro ao processar",
+        description: "Tente novamente ou entre em contato por telefone: (16) 99752-7532",
         variant: "destructive",
       });
     } finally {
