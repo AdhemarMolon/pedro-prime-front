@@ -1,10 +1,15 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { LogIn, Building2, Lock, Mail, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { API_BASE } from "@/lib/api";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
-  const [password, setPass] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -14,56 +19,147 @@ export default function AdminLogin() {
     e.preventDefault();
     setErro(null);
     setLoading(true);
+    
     try {
       const res = await fetch(`${API_BASE}/api/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password }),
       });
+      
       if (!res.ok) {
         const msg = await res.text().catch(() => res.statusText);
-        throw new Error(`${res.status} ${msg || "Falha no login"}`);
+        throw new Error(msg || "Credenciais inválidas");
       }
-      const data = await res.json(); // deve ter { token }
-      if (!data?.token) throw new Error("Resposta sem token");
+      
+      const data = await res.json();
+      
+      if (!data?.token) {
+        throw new Error("Resposta inválida do servidor");
+      }
+      
       localStorage.setItem("admin_token", data.token);
-      console.log("[login] token salvo:", data.token); // debug
       const to = loc?.state?.from || "/admin";
       navigate(to, { replace: true });
+      
     } catch (e: any) {
-      setErro(e?.message ?? "Falha no login");
+      setErro(e?.message ?? "Erro ao fazer login. Verifique suas credenciais.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="max-w-md mx-auto p-6">
-      <h1 className="text-2xl font-semibold mb-4">Login do Admin</h1>
-      <form onSubmit={onSubmit} className="flex flex-col gap-3">
-        <input
-          className="border px-3 py-2"
-          type="email"
-          placeholder="E-mail"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          autoComplete="username"
-          required
-        />
-        <input
-          className="border px-3 py-2"
-          type="password"
-          placeholder="Senha"
-          value={password}
-          onChange={(e) => setPass(e.target.value)}
-          autoComplete="current-password"
-          required
-        />
-        {erro && <p className="text-red-600">{erro}</p>}
-        <button className="border px-4 py-2" disabled={loading}>
-          {loading ? "Entrando..." : "Entrar"}
-        </button>
-      </form>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo/Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl mb-4 shadow-lg">
+            <Building2 className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Pedro de Toledo Imóveis
+          </h1>
+          <p className="text-gray-600">
+            Área Administrativa
+          </p>
+        </div>
+
+        {/* Card de Login */}
+        <Card className="border-0 shadow-2xl">
+          <CardHeader className="space-y-1 pb-6">
+            <CardTitle className="text-2xl font-bold text-center">
+              Bem-vindo de volta
+            </CardTitle>
+            <CardDescription className="text-center">
+              Entre com suas credenciais para acessar o painel
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent>
+            <form onSubmit={onSubmit} className="space-y-4">
+              {/* Email */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  E-mail
+                </label>
+                <Input
+                  type="email"
+                  placeholder="admin@pedro.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="username"
+                  required
+                  className="h-11"
+                  disabled={loading}
+                />
+              </div>
+
+              {/* Senha */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Lock className="h-4 w-4" />
+                  Senha
+                </label>
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  required
+                  className="h-11"
+                  disabled={loading}
+                />
+              </div>
+
+              {/* Erro */}
+              {erro && (
+                <Alert variant="destructive" className="animate-in slide-in-from-top-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{erro}</AlertDescription>
+                </Alert>
+              )}
+
+              {/* Botão */}
+              <Button
+                type="submit"
+                className="w-full h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Entrando...
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="mr-2 h-5 w-5" />
+                    Entrar
+                  </>
+                )}
+              </Button>
+            </form>
+
+            {/* Credenciais de Demo */}
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+              <p className="text-xs text-gray-600 text-center mb-2 font-medium">
+                Credenciais de Acesso:
+              </p>
+              <div className="text-xs text-gray-700 space-y-1">
+                <p><strong>Email:</strong> admin@pedro.com</p>
+                <p><strong>Senha:</strong> admin123</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Footer */}
+        <p className="text-center text-sm text-gray-500 mt-6">
+          © 2025 Pedro de Toledo Imóveis. Todos os direitos reservados.
+        </p>
+      </div>
     </div>
   );
 }

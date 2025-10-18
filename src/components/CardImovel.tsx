@@ -1,245 +1,243 @@
 import { Link } from "react-router-dom";
-import { MapPin, DollarSign, Ruler, Bed, Bath, Car, ImageIcon } from "lucide-react";
-import { Badge } from "../components/ui/badge";
-import { Card, CardContent } from "../components/ui/card";
-import { ImovelType } from "../lib/api";
+import { MapPin, DollarSign, Ruler, Bed, Bath, Car, ImageIcon, Tag } from "lucide-react";
+import { Badge } from "./ui/badge";
+import { Card, CardContent } from "./ui/card";
+import type { Imovel } from "../lib/api";
 
 type ViewMode = "grid" | "list";
 
 type CardImovelProps = {
-  i: ImovelType & { _id?: any; id?: any } & Record<string, any>;
-  viewMode: ViewMode;
+  imovel: Imovel;
+  viewMode?: ViewMode;
 };
 
-/* ----------------- ID helpers ----------------- */
-function normalizeIdVal(val: any): string | undefined {
-  if (!val) return undefined;
-  if (typeof val === "string" && val.trim()) return val.trim();
-  if (typeof val === "number") return String(val);
-  if (typeof val === "object") {
-    if (typeof val.$oid === "string") return val.$oid;
-    if (typeof val.oid === "string") return val.oid;
-    if (typeof val._id === "string") return val._id;
-    if (typeof val.id === "string") return val.id;
-    if (typeof (val as any).toHexString === "function") {
-      try {
-        const hex = (val as any).toHexString();
-        if (typeof hex === "string" && hex) return hex;
-      } catch {}
-    }
-    const s = String(val);
-    const m = s.match(/ObjectId\('([0-9a-fA-F]{24})'\)/);
-    if (m) return m[1];
-  }
-  return undefined;
-}
-function getId(x: any) {
-  return normalizeIdVal(x?._id) ?? normalizeIdVal(x?.id);
+// Helpers
+function getId(i: Imovel) {
+  return i.id || i._id || '';
 }
 
-/* ----------------- Number helpers ----------------- */
-function num(n: any) {
-  const v = Number(n);
-  return Number.isFinite(v) ? v : undefined;
+function getPreco(i: Imovel) {
+  return Number(i.preco ?? 0);
 }
 
-/* ----------------- Field helpers ----------------- */
-function getPreco(i: any) {
-  return num(i?.preco ?? i?.valor ?? i?.price);
-}
-function getArea(i: any) {
-  return num(
-    i?.area ??
-      i?.areaUtil ??
-      i?.m2 ??
-      i?.area_m2 ??
-      i?.caracteristicas?.area_m2 ??
-      i?.caracteristicas?.area
-  );
-}
-function getQuartos(i: any) {
-  return num(i?.quartos ?? i?.dorms ?? i?.bedrooms ?? i?.caracteristicas?.quartos);
-}
-function getBanheiros(i: any) {
-  return num(i?.banheiros ?? i?.baths ?? i?.banho ?? i?.caracteristicas?.banheiros);
-}
-function getVagas(i: any) {
-  return num(i?.vagas ?? i?.garagem ?? i?.garages ?? i?.caracteristicas?.garagem);
-}
-function getTitulo(i: any) {
-  const base =
-    i?.titulo ??
-    i?.nome ??
-    i?.title ??
-    i?.headline ??
-    `${i?.tipo || ""} ${i?.bairro || ""}`.trim();
-  return String(base || "Imóvel").trim();
-}
-function getLocalStr(i: any) {
-  const bairro = i?.bairro ?? i?.endereco?.bairro ?? i?.district ?? "";
-  const cidade = i?.cidade ?? i?.endereco?.cidade ?? i?.localidade ?? i?.city ?? "";
-  const estado = i?.estado ?? i?.endereco?.estado ?? i?.state ?? i?.uf ?? "";
-  return [bairro, cidade, estado].filter(Boolean).join(" • ");
+function getArea(i: Imovel) {
+  return Number(i.area_m2 ?? i.caracteristicas?.area_m2 ?? 0);
 }
 
-/* ----------------- Imagem helpers ----------------- */
-function fromGoogleImgRes(u: string): string {
-  try {
-    const url = new URL(u);
-    if (url.hostname.includes("google.") && url.pathname.includes("/imgres")) {
-      const raw = url.searchParams.get("imgurl");
-      if (raw) return decodeURIComponent(raw);
-    }
-  } catch {}
-  return u;
-}
-function firstNonEmpty(arr: (string | undefined)[]): string {
-  for (const s of arr) if (s && s.trim()) return s.trim();
-  return "";
-}
-function resolveImageUrl(i: any): string {
-  if (typeof i?.imagens === "string") {
-    const first = i.imagens.split(",")[0]?.trim();
-    if (first) return fromGoogleImgRes(first);
-  }
-  const arraysPossiveis = [i?.imagens, i?.images, i?.fotos, i?.photos].filter(Array.isArray);
-  for (const arr of arraysPossiveis as any[]) {
-    if (arr.length > 0) {
-      const a0 = arr[0];
-      if (typeof a0 === "string" && a0) return fromGoogleImgRes(a0);
-      if (typeof a0 === "object" && (a0?.url || a0?.src)) {
-        return fromGoogleImgRes(a0.url || a0.src);
-      }
-    }
-  }
-  const single = firstNonEmpty([i?.imagem, i?.image, i?.capa, i?.cover, i?.caracteristicas?.capa]);
-  if (single) return fromGoogleImgRes(single);
-  return "";
+function getQuartos(i: Imovel) {
+  return Number(i.quartos ?? i.caracteristicas?.quartos ?? 0);
 }
 
-/* ----------------- Componente ----------------- */
-export default function CardImovel({ i, viewMode }: CardImovelProps) {
-  const rawId = getId(i);
-  const id = rawId ? encodeURIComponent(rawId) : undefined;
-  const preco = getPreco(i);
-  const area = getArea(i);
-  const quartos = getQuartos(i);
-  const banheiros = getBanheiros(i);
-  const vagas = getVagas(i);
-  const titulo = getTitulo(i);
-  const localStr = getLocalStr(i);
-  const imgUrl = resolveImageUrl(i);
+function getBanheiros(i: Imovel) {
+  return Number(i.banheiros ?? i.caracteristicas?.banheiros ?? 0);
+}
+
+function getGaragem(i: Imovel) {
+  return Number(i.garagem ?? i.caracteristicas?.garagem ?? 0);
+}
+
+function getCidade(i: Imovel) {
+  return i.cidade || i.endereco?.cidade || '';
+}
+
+function getBairro(i: Imovel) {
+  return i.bairro || i.endereco?.bairro || '';
+}
+
+function getImagem(i: Imovel): string {
+  if (!i.imagens || i.imagens.length === 0) return '';
+  const img = i.imagens[0];
+  if (typeof img === 'string') return img;
+  return img?.url || '';
+}
+
+function getTipo(i: Imovel): string {
+  const tipo = i.tipo || '';
+  const map: Record<string, string> = {
+    'CASA': 'Casa',
+    'APARTAMENTO': 'Apartamento',
+    'TERRENO': 'Terreno',
+    'SITIO': 'Sítio',
+    'COMERCIAL': 'Comercial',
+    'GALPAO': 'Galpão',
+  };
+  return map[tipo.toUpperCase()] || tipo;
+}
+
+function getFinalidade(i: Imovel): string {
+  const finalidade = i.finalidade || '';
+  const map: Record<string, string> = {
+    'VENDA': 'Venda',
+    'ALUGUEL': 'Aluguel',
+  };
+  return map[finalidade.toUpperCase()] || finalidade;
+}
+
+// Tags com labels amigáveis
+const TAG_LABELS: Record<string, string> = {
+  'DESTAQUE': 'Destaque',
+  'LANCAMENTO': 'Lançamento',
+  'OPORTUNIDADE': 'Oportunidade',
+  'ACEITA_FINANCIAMENTO': 'Aceita Financiamento',
+  'ACEITA_PERMUTA': 'Aceita Permuta',
+  'PRONTO_MORAR': 'Pronto para Morar',
+  'NA_PLANTA': 'Na Planta',
+  'MOBILIADO': 'Mobiliado',
+  'PISCINA': 'Piscina',
+  'AREA_GOURMET': 'Área Gourmet',
+  'QUINTAL': 'Quintal',
+  'GARAGEM_COBERTA': 'Garagem Coberta',
+  'PROXIMO_METRO': 'Próximo ao Metrô',
+  'CONDOMINIO_FECHADO': 'Condomínio Fechado',
+  'VISTA_MAR': 'Vista Mar',
+  'VISTA_MONTANHA': 'Vista Montanha',
+  'PET_FRIENDLY': 'Pet Friendly',
+  'ENERGIA_SOLAR': 'Energia Solar',
+};
+
+export default function CardImovel({ imovel, viewMode = "grid" }: CardImovelProps) {
+  const id = getId(imovel);
+  const titulo = imovel.titulo || 'Sem título';
+  const preco = getPreco(imovel);
+  const area = getArea(imovel);
+  const quartos = getQuartos(imovel);
+  const banheiros = getBanheiros(imovel);
+  const garagem = getGaragem(imovel);
+  const cidade = getCidade(imovel);
+  const bairro = getBairro(imovel);
+  const imgUrl = getImagem(imovel);
+  const tipo = getTipo(imovel);
+  const finalidade = getFinalidade(imovel);
+  const tags = imovel.tags || [];
+
+  const localStr = [bairro, cidade].filter(Boolean).join(', ');
   const isList = viewMode === "list";
 
-  const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) =>
-    id ? (
-      <Link
-        to={`/imoveis/${id}`} // <<<<<< CORRIGIDO: rota plural
-        className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-2xl"
-      >
-        {children}
-      </Link>
-    ) : (
-      <div className="block">{children}</div>
-    );
+  // Exibir apenas as 2 primeiras tags para evitar poluição visual
+  const displayTags = tags.slice(0, 2);
 
   return (
-    <Wrapper>
-      <Card
-        className={[
-          "overflow-hidden border-0 shadow-md transition-all duration-200 bg-white",
-          "hover:shadow-lg hover:-translate-y-0.5 rounded-2xl",
-          isList ? "flex" : "",
-        ].join(" ")}
-      >
-        <div className={isList ? "flex w-full" : ""}>
-          {/* IMAGEM */}
-          <div className={["relative shrink-0", isList ? "w-48 h-36 md:w-56 md:h-40" : "w-full"].join(" ")}>
-            <div className={isList ? "h-full" : "aspect-[16/10] w-full"}>
-              {imgUrl ? (
-                <img
-                  src={imgUrl}
-                  alt={titulo}
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gray-100">
-                  <ImageIcon className="h-8 w-8 text-gray-400" />
-                </div>
-              )}
-            </div>
-
-            <div className="pointer-events-none absolute left-2 top-2 flex flex-wrap gap-1">
-              {i?.finalidade ? (
-                <Badge variant="secondary" className="bg-white/90 text-gray-700">
-                  {String(i.finalidade)}
-                </Badge>
-              ) : null}
-              {i?.tipo ? (
-                <Badge variant="secondary" className="bg-white/90 text-gray-700">
-                  {String(i.tipo)}
-                </Badge>
-              ) : null}
-            </div>
+    <Link to={`/imovel/${id}`} className="block group">
+      <Card className={`
+        overflow-hidden border-0 shadow-md transition-all duration-300 bg-white
+        hover:shadow-xl hover:-translate-y-1
+        ${isList ? 'flex flex-row' : 'rounded-xl'}
+      `}>
+        {/* IMAGEM */}
+        <div className={`relative shrink-0 overflow-hidden ${isList ? 'w-40 sm:w-48 md:w-56' : 'w-full'}`}>
+          <div className={`${isList ? 'h-full min-h-[180px]' : 'aspect-[4/3]'} w-full`}>
+            {imgUrl ? (
+              <img
+                src={imgUrl}
+                alt={titulo}
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                loading="lazy"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                <ImageIcon className="h-12 w-12 text-gray-400" />
+              </div>
+            )}
           </div>
 
-          {/* CONTEÚDO */}
-          <CardContent className={isList ? "flex min-w-0 flex-1 p-4" : "p-4"}>
-            <div className="min-w-0 flex-1">
-              <h3 className="truncate text-lg font-semibold text-gray-900">{titulo}</h3>
+          {/* Tipo e Finalidade - apenas na imagem, não duplicado */}
+          <div className="absolute left-3 top-3 flex flex-wrap gap-2">
+            {finalidade && (
+              <Badge className="bg-blue-600 text-white shadow-lg border-0">
+                {finalidade}
+              </Badge>
+            )}
+            {tipo && (
+              <Badge variant="secondary" className="bg-white/95 backdrop-blur-sm text-gray-700 shadow-md">
+                {tipo}
+              </Badge>
+            )}
+          </div>
 
-              {localStr && (
-                <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
-                  <MapPin className="h-4 w-4" />
-                  <span className="truncate">{localStr}</span>
+          {/* Tags (max 2) */}
+          {displayTags.length > 0 && (
+            <div className="absolute right-3 top-3 flex flex-wrap gap-1 max-w-[50%] justify-end">
+              {displayTags.map(tag => (
+                <Badge 
+                  key={tag} 
+                  variant="outline" 
+                  className="bg-amber-500/90 backdrop-blur-sm text-white border-0 shadow-md text-xs"
+                >
+                  {TAG_LABELS[tag] || tag}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* CONTEÚDO */}
+        <CardContent className={`${isList ? 'flex-1 p-4 md:p-5' : 'p-4 md:p-5'}`}>
+          <div className="space-y-3">
+            {/* Título */}
+            <h3 className="font-bold text-lg md:text-xl text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors">
+              {titulo}
+            </h3>
+
+            {/* Localização */}
+            {localStr && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <MapPin className="h-4 w-4 flex-shrink-0 text-blue-600" />
+                <span className="truncate">{localStr}</span>
+              </div>
+            )}
+
+            {/* Preço */}
+            {preco > 0 && (
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-green-600" />
+                <span className="text-2xl font-bold text-green-600">
+                  {new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                    minimumFractionDigits: 0,
+                  }).format(preco)}
+                </span>
+              </div>
+            )}
+
+            {/* Características */}
+            <div className="flex flex-wrap gap-3 pt-2 border-t border-gray-100">
+              {area > 0 && (
+                <div className="flex items-center gap-1.5 text-sm text-gray-700">
+                  <Ruler className="h-4 w-4 text-gray-500" />
+                  <span className="font-medium">{area} m²</span>
                 </div>
               )}
-
-              {typeof preco === "number" && !Number.isNaN(preco) ? (
-                <div className="mt-3 text-xl font-bold text-gray-900">
-                  R$ {preco.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              {quartos > 0 && (
+                <div className="flex items-center gap-1.5 text-sm text-gray-700">
+                  <Bed className="h-4 w-4 text-gray-500" />
+                  <span className="font-medium">{quartos}</span>
                 </div>
-              ) : null}
-
-              <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-gray-700">
-                {area ? (
-                  <span className="inline-flex items-center gap-1">
-                    <Ruler className="h-4 w-4" />
-                    {area} m²
-                  </span>
-                ) : null}
-                {quartos ? (
-                  <span className="inline-flex items-center gap-1">
-                    <Bed className="h-4 w-4" />
-                    {quartos} {quartos === 1 ? "quarto" : "quartos"}
-                  </span>
-                ) : null}
-                {banheiros ? (
-                  <span className="inline-flex items-center gap-1">
-                    <Bath className="h-4 w-4" />
-                    {banheiros} {banheiros === 1 ? "banheiro" : "banheiros"}
-                  </span>
-                ) : null}
-                {vagas ? (
-                  <span className="inline-flex items-center gap-1">
-                    <Car className="h-4 w-4" />
-                    {vagas} {vagas === 1 ? "vaga" : "vagas"}
-                  </span>
-                ) : null}
-              </div>
-
-              {preco && area ? (
-                <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700">
-                  <DollarSign className="h-3 w-3" />
-                  R$ {(preco / area).toFixed(0)}/m²
+              )}
+              {banheiros > 0 && (
+                <div className="flex items-center gap-1.5 text-sm text-gray-700">
+                  <Bath className="h-4 w-4 text-gray-500" />
+                  <span className="font-medium">{banheiros}</span>
                 </div>
-              ) : null}
+              )}
+              {garagem > 0 && (
+                <div className="flex items-center gap-1.5 text-sm text-gray-700">
+                  <Car className="h-4 w-4 text-gray-500" />
+                  <span className="font-medium">{garagem}</span>
+                </div>
+              )}
             </div>
-          </CardContent>
-        </div>
+
+            {/* Contador de mais tags se houver */}
+            {tags.length > 2 && (
+              <div className="flex items-center gap-1 text-xs text-gray-500">
+                <Tag className="h-3 w-3" />
+                <span>+{tags.length - 2} {tags.length - 2 === 1 ? 'tag' : 'tags'}</span>
+              </div>
+            )}
+          </div>
+        </CardContent>
       </Card>
-    </Wrapper>
+    </Link>
   );
 }
