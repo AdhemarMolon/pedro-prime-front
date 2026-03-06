@@ -1,6 +1,6 @@
 // api/admin/login.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import bcrypt from "bcryptjs";
+import * as bcrypt from "bcryptjs";
 import { prisma } from "../_lib/prisma";
 import { signToken } from "../_lib/auth";
 import { setCors } from "../_lib/cors";

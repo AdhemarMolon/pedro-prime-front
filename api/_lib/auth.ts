@@ -1,7 +1,7 @@
 // api/_lib/auth.ts
 // JWT helpers for admin authentication
 
-import jwt from "jsonwebtoken";
+import * as jwt from "jsonwebtoken";
 import type { VercelRequest } from "@vercel/node";
 
 const SECRET = process.env.JWT_SECRET || "fallback-dev-secret";
