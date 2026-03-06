@@ -1,9 +1,12 @@
 // api/admin/login.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import * as bcrypt from "bcryptjs";
+import bcryptModule from "bcryptjs";
 import { prisma } from "../_lib/prisma.js";
 import { signToken } from "../_lib/auth.js";
 import { setCors } from "../_lib/cors.js";
+
+// ESM interop: handle both default and namespace imports
+const bcrypt = (bcryptModule as any).default || bcryptModule;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (setCors(req, res)) return;

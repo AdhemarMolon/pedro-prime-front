@@ -1,8 +1,11 @@
 // api/_lib/auth.ts
 // JWT helpers for admin authentication
 
-import * as jwt from "jsonwebtoken";
+import jwtModule from "jsonwebtoken";
 import type { VercelRequest } from "@vercel/node";
+
+// ESM interop: handle both default and namespace imports
+const jwt = (jwtModule as any).default || jwtModule;
 
 const SECRET = process.env.JWT_SECRET || "fallback-dev-secret";
 
