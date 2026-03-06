@@ -2,108 +2,84 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Pedro de Toledo Imóveis Design System */
+/* Pedro de Toledo Imóveis – Design System v2 */
+/* Modern · Minimal · Professional */
 
 @layer base {
   :root {
-    /* Brand Colors */
-    --brand-blue: 226 71% 39%;  /* #1f3fae */
-    --brand-amber: 43 96% 56%;  /* #f59e0b */
-    
-    /* Base System */
-    --background: 0 0% 100%;
-    --foreground: 210 13% 16%;
-    
+    /* Brand – Deep Navy + Warm Gold */
+    --brand-navy: 222 47% 11%;
+    --brand-gold: 38 55% 52%;
+
+    /* System palette */
+    --background: 0 0% 99%;
+    --foreground: 222 47% 11%;
+
     --card: 0 0% 100%;
-    --card-foreground: 210 13% 16%;
-    
+    --card-foreground: 222 47% 11%;
+
     --popover: 0 0% 100%;
-    --popover-foreground: 210 13% 16%;
-    
-    --primary: 226 71% 39%;  /* brand-blue */
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 222 47% 11%;
     --primary-foreground: 0 0% 100%;
-    
-    --secondary: 210 20% 98%;
-    --secondary-foreground: 210 13% 16%;
-    
-    --muted: 210 20% 98%;
-    --muted-foreground: 215 13% 50%;
-    
-    --accent: 43 96% 56%;  /* brand-amber */
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 38 55% 52%;
     --accent-foreground: 0 0% 100%;
-    
-    --destructive: 0 84% 60%;
+
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 226 71% 39%;
-    
-    --radius: 0.75rem;
-    
-    /* Custom gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(var(--brand-blue)), hsl(233 65% 30%));
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 20% 99%));
-    
-    /* Shadows */
-    --shadow-soft: 0 1px 3px 0 hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-medium: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
-    --shadow-large: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
-    
-    /* Transitions */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 222 47% 11%;
+
+    --radius: 0.625rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    --background: 210 13% 8%;
-    --foreground: 0 0% 95%;
-    
-    --card: 210 13% 10%;
-    --card-foreground: 0 0% 95%;
-    
-    --popover: 210 13% 10%;
-    --popover-foreground: 0 0% 95%;
-    
-    --primary: 226 71% 50%;
-    --primary-foreground: 0 0% 100%;
-    
-    --secondary: 210 13% 15%;
-    --secondary-foreground: 0 0% 95%;
-    
-    --muted: 210 13% 15%;
-    --muted-foreground: 215 13% 65%;
-    
-    --accent: 43 96% 56%;
-    --accent-foreground: 0 0% 100%;
-    
-    --destructive: 0 84% 60%;
+    --background: 222 47% 6%;
+    --foreground: 210 20% 95%;
+
+    --card: 222 47% 8%;
+    --card-foreground: 210 20% 95%;
+
+    --popover: 222 47% 8%;
+    --popover-foreground: 210 20% 95%;
+
+    --primary: 38 55% 52%;
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 222 30% 15%;
+    --secondary-foreground: 210 20% 95%;
+
+    --muted: 222 30% 15%;
+    --muted-foreground: 220 9% 55%;
+
+    --accent: 38 55% 52%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    
-    --border: 210 13% 20%;
-    --input: 210 13% 20%;
-    --ring: 226 71% 50%;
-    
-    --gradient-hero: linear-gradient(135deg, hsl(var(--brand-blue)), hsl(233 65% 20%));
-    --shadow-soft: 0 1px 3px 0 hsl(0 0% 0% / 0.3), 0 1px 2px -1px hsl(0 0% 0% / 0.3);
-    --shadow-medium: 0 4px 6px -1px hsl(0 0% 0% / 0.3), 0 2px 4px -2px hsl(0 0% 0% / 0.3);
-    --shadow-large: 0 10px 15px -3px hsl(0 0% 0% / 0.3), 0 4px 6px -4px hsl(0 0% 0% / 0.3);
+
+    --border: 222 30% 18%;
+    --input: 222 30% 18%;
+    --ring: 38 55% 52%;
   }
 }
 
@@ -115,8 +91,41 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
-  
+
   html {
     scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out forwards;
+  }
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-out forwards;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Minimal scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(220 9% 78%); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(220 9% 60%); }

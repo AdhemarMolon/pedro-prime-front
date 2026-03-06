@@ -1,12 +1,11 @@
 // src/lib/api.ts
 
-// Base lida do Vite + fallback público
+// Base URL: empty string = same domain (Vercel serverless)
 const RAW_BASE =
   (import.meta as any)?.env?.VITE_API_BASE ??
   (import.meta as any)?.env?.VITE_API_URL ??
   "";
-const DEFAULT_BASE = "https://fullstack-imoveis-api.onrender.com";
-export const API_BASE: string = String(RAW_BASE || DEFAULT_BASE).replace(/\/+$/, "");
+export const API_BASE: string = String(RAW_BASE || "").replace(/\/+$/, "");
 
 type Query = Record<string, string | number | boolean | null | undefined>;
 

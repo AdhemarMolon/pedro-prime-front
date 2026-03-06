@@ -1,14 +1,15 @@
-// src/pages/Nav.tsx
-import { useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAdmin } from "../context/AdminContext";
+import { Menu, X, LogOut } from "lucide-react";
 
 export default function Nav() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAdmin, logout } = useAdmin();
   const logoRef = useRef<HTMLAnchorElement | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Atalho de teclado: Shift + Alt + A
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.shiftKey && e.altKey && (e.key === "a" || e.key === "A")) {
@@ -19,7 +20,6 @@ export default function Nav() {
     return () => window.removeEventListener("keydown", onKey);
   }, [navigate]);
 
-  // Duplo clique no logo → /admin/login
   useEffect(() => {
     const el = logoRef.current;
     if (!el) return;
@@ -31,90 +31,125 @@ export default function Nav() {
     return () => el.removeEventListener("dblclick", onDbl);
   }, [navigate]);
 
-  const handleSecretClick = () => navigate("/admin/login");
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  const navLinks = [
+    { label: "Imoveis", href: "/imoveis" },
+    { label: "Sobre", href: "/sobre" },
+  ];
+
+  const isActive = (href: string) =>
+    location.pathname === href || location.pathname.startsWith(href + "/");
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+    <header className="sticky top-0 z-50 border-b border-border/60 bg-card/90 backdrop-blur-md supports-[backdrop-filter]:bg-card/80">
       <div className="mx-auto max-w-6xl px-4">
-        {/* Grid com 3 colunas para manter o centro perfeito */}
-        <div className="grid h-16 grid-cols-3 items-center">
-          {/* Coluna esquerda: casinha + pontinho secreto */}
-          <div className="flex items-center gap-3 justify-start">
-            {/* Ícone de casinha (imobiliária) */}
-            <span
-              aria-hidden="true"
-              className="hidden sm:inline-flex h-8 w-8 items-center justify-center rounded-lg border bg-white shadow-sm"
-              title="Imobiliária"
-            >
-              {/* SVG simples de casa (roofline) */}
-              <svg
-                viewBox="0 0 24 24"
-                className="h-5 w-5 text-blue-600"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M3 10.5L12 3l9 7.5" />
-                <path d="M5 10v10h14V10" />
-                <path d="M9 20v-6h6v6" />
+        <div className="flex h-16 items-center justify-between">
+          <Link
+            ref={logoRef}
+            to="/"
+            className="group flex items-center gap-2.5 select-none"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform group-hover:scale-105">
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+                <path d="M12 3l8 6h-2v9h-4v-6H10v6H6v-9H4l8-6z" />
               </svg>
-            </span>
+            </div>
+            <div className="hidden sm:block">
+              <span className="text-sm font-bold tracking-tight text-foreground">
+                Pedro de Toledo
+              </span>
+              <span className="block text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                Corretor de Imoveis
+              </span>
+            </div>
+          </Link>
 
-            {/* Pontinho “decorativo” (atalho escondido) */}
-            <button
-              onClick={handleSecretClick}
-              aria-hidden="true"
-              tabIndex={-1}
-              className="h-2 w-2 rounded-full bg-neutral-300 transition-colors hover:bg-neutral-400"
-              title="•"
-            />
-          </div>
-
-          {/* Coluna central (branding + navegação) */}
-          <div className="flex items-center justify-center">
-            <Link
-              ref={logoRef}
-              to="/"
-              className="group select-none font-semibold tracking-tight text-neutral-800 hover:opacity-90 transition-opacity text-sm sm:text-base flex items-center gap-2"
-              title="Pedro de Toledo Corretor"
-            >
-              {/* Mini telhadinho integrado ao logotipo (reforço visual) */}
-              <svg
-              viewBox="0 0 24 24"
-              className="h-5 w-5 text-blue-600 transition-transform group-hover:-translate-y-0.5"
-              fill="currentColor"
+          <nav className="hidden md:flex items-center gap-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                to={link.href}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isActive(link.href)
+                    ? "bg-secondary text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                }`}
               >
-              <path d="M12 3l8 6h-2v9h-4v-6H10v6H6v-9H4l8-6z" />
-              </svg>
-              <span className="font-bold">Pedro de Toledo Corretor</span>
-            </Link>
-
-            <nav className="ml-6 hidden sm:flex gap-6 text-sm text-neutral-600">
-              <Link className="hover:text-neutral-900" to="/imoveis">
-                Imóveis
+                {link.label}
               </Link>
-              <Link className="hover:text-neutral-900" to="/sobre">
-                Sobre
-              </Link>
-            </nav>
-          </div>
-
-          {/* Coluna direita - vazia, mantém layout simétrico */}
-          <div className="flex items-center justify-end gap-3">
+            ))}
             {isAdmin && (
-              <button
-                onClick={logout}
-                className="text-xs text-gray-400 hover:text-red-500 transition-colors"
-                title="Sair da área admin"
-              >
-                Sair
-              </button>
+              <>
+                <Link
+                  to="/admin/imoveis"
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive("/admin")
+                      ? "bg-secondary text-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                  }`}
+                >
+                  Painel
+                </Link>
+                <button
+                  onClick={logout}
+                  className="ml-2 flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-destructive hover:bg-red-50 transition-colors"
+                  title="Sair"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  Sair
+                </button>
+              </>
             )}
-          </div>
+          </nav>
+
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden flex items-center justify-center h-10 w-10 rounded-lg text-muted-foreground hover:bg-secondary transition-colors"
+            aria-label="Menu"
+          >
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
       </div>
+
+      {mobileOpen && (
+        <div className="md:hidden border-t border-border/60 bg-card animate-slide-down">
+          <nav className="mx-auto max-w-6xl px-4 py-3 space-y-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                to={link.href}
+                className={`block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  isActive(link.href)
+                    ? "bg-secondary text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+            {isAdmin && (
+              <>
+                <Link
+                  to="/admin/imoveis"
+                  className="block px-4 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+                >
+                  Painel Admin
+                </Link>
+                <button
+                  onClick={logout}
+                  className="w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
+                >
+                  Sair
+                </button>
+              </>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

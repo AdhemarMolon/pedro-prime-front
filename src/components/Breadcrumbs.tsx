@@ -51,7 +51,7 @@ const Breadcrumbs = () => {
   }
 
   return (
-    <nav className="bg-white border-b border-gray-200 py-3 px-4">
+    <nav className="bg-card border-b border-border py-3 px-4">
       <div className="max-w-7xl mx-auto">
         <ol className="flex items-center gap-2 text-sm">
           {breadcrumbs.map((crumb, index) => {
@@ -62,26 +62,26 @@ const Breadcrumbs = () => {
                 {index === 0 ? (
                   <Link 
                     to={crumb.path} 
-                    className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors"
+                    className="flex items-center gap-1 text-primary hover:text-primary/80 transition-colors"
                   >
                     <Home className="h-4 w-4" />
                     <span>{crumb.label}</span>
                   </Link>
                 ) : isLast ? (
-                  <span className="text-gray-600 font-medium">
+                  <span className="text-muted-foreground font-medium">
                     {crumb.label}
                   </span>
                 ) : (
                   <Link 
                     to={crumb.path} 
-                    className="text-blue-600 hover:text-blue-800 transition-colors"
+                    className="text-primary hover:text-primary/80 transition-colors"
                   >
                     {crumb.label}
                   </Link>
                 )}
                 
                 {!isLast && (
-                  <ChevronRight className="h-4 w-4 text-gray-400" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 )}
               </li>
             );

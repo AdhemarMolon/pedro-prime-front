@@ -12,10 +12,9 @@ interface ShareButtonsProps {
   title: string;
   description?: string;
   url?: string;
-  imageUrl?: string;
 }
 
-const ShareButtons = ({ title, description, url, imageUrl }: ShareButtonsProps) => {
+const ShareButtons = ({ title, description, url }: ShareButtonsProps) => {
   const [copied, setCopied] = useState(false);
   
   const shareUrl = url || window.location.href;
@@ -40,8 +39,8 @@ const ShareButtons = ({ title, description, url, imageUrl }: ShareButtonsProps) 
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Erro ao copiar link:', err);
+    } catch {
+      // clipboard API not available
     }
   };
 
@@ -53,8 +52,8 @@ const ShareButtons = ({ title, description, url, imageUrl }: ShareButtonsProps) 
           text: shareDescription,
           url: shareUrl,
         });
-      } catch (err) {
-        console.error('Erro ao compartilhar:', err);
+      } catch {
+        // share cancelled or not available
       }
     }
   };
@@ -84,11 +83,11 @@ const ShareButtons = ({ title, description, url, imageUrl }: ShareButtonsProps) 
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuItem onClick={handleWhatsApp} className="gap-2 cursor-pointer">
-          <MessageCircle className="h-4 w-4 text-green-600" />
+          <MessageCircle className="h-4 w-4 text-emerald-600" />
           <span>WhatsApp</span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleFacebook} className="gap-2 cursor-pointer">
-          <Facebook className="h-4 w-4 text-blue-600" />
+          <Facebook className="h-4 w-4 text-primary" />
           <span>Facebook</span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleCopyLink} className="gap-2 cursor-pointer">

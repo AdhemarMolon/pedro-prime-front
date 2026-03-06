@@ -1,453 +1,240 @@
-import { useEffect, useState, useCallback, useEffect as UseEffectAlias } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
-  ArrowLeft,
-  MapPin,
-  DollarSign,
-  Ruler,
-  Bed,
-  Bath,
-  Car,
-  Building2,
-  ImageIcon,
-  Share2,
-  Heart,
-  Phone,
-  MessageCircle,
-  Eye,
-  Star,
-  CheckCircle,
-  Mail,
-  X,
-  ChevronLeft,
-  ChevronRight,
+  ArrowLeft, MapPin, Ruler, Bed, Bath, Car, Building2, ImageIcon,
+  Heart, Phone, MessageCircle, Eye, Star, CheckCircle, X,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
 import type { Imovel } from "../lib/api";
 import { ImoveisAPI } from "../lib/api";
+import { formatCurrency } from "../lib/utils";
+import { getTagConfig } from "../lib/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Separator } from "../components/ui/separator";
+import { Input } from "../components/ui/input";
+import { Textarea } from "../components/ui/textarea";
 import ShareButtons from "../components/ShareButtons";
 
-/** Contato fixo */
 const CORRETOR = {
   nome: "Pedro de Toledo",
-  whatsapp: "5516996137532",  
-  telefoneDisplay: "(16) 99613-7532", 
+  whatsapp: "5516996137532",
+  telefoneDisplay: "(16) 99613-7532",
   email: "pedro.toledo@creci.org.br",
 };
-const buildWhatsAppLink = (text: string) =>
-  `https://wa.me/${CORRETOR.whatsapp}?text=${encodeURIComponent(text)}`;
-const buildTelLink = () => `tel:+${CORRETOR.whatsapp}`;
+const whatsLink = (text: string) => `https://wa.me/${CORRETOR.whatsapp}?text=${encodeURIComponent(text)}`;
+const telLink = () => `tel:+${CORRETOR.whatsapp}`;
 
-/** Normaliza o shape e as imagens (strings → {url,legenda}) */
-function normalizeImovel(raw: Imovel | null | undefined): (Imovel & { imagens: Array<{ url: string; legenda: string }> }) | null {
+type NormalizedImg = { url: string; legenda: string };
+
+function normalizeImovel(raw: Imovel | null): (Imovel & { imagens: NormalizedImg[] }) | null {
   if (!raw) return null;
-  
-  const imagensRaw = raw.imagens ?? [];
-  const imagens = Array.isArray(imagensRaw)
-    ? imagensRaw.map((img) =>
-        typeof img === "string"
-          ? { url: img, legenda: "" }
-          : { url: img?.url ?? "", legenda: img?.legenda ?? "" }
-      )
+  const imgs = Array.isArray(raw.imagens)
+    ? raw.imagens.map((i) => (typeof i === "string" ? { url: i, legenda: "" } : { url: i?.url ?? "", legenda: i?.legenda ?? "" }))
     : [];
-
-  return {
-    ...raw,
-    imagens,
-  };
+  return { ...raw, imagens: imgs };
 }
 
-// Helpers para acessar propriedades do imóvel
-const getCidade = (i: Imovel) => i.endereco?.cidade ?? "";
-const getArea = (i: Imovel) => i.caracteristicas?.area_m2 ?? 0;
-const getImageUrl = (img: string | { url: string; legenda?: string }) => 
-  typeof img === "string" ? img : img.url;
+function getVal(i: Imovel, k: string) {
+  const flat = (i as Record<string, unknown>)[k];
+  const nested = (i.caracteristicas as Record<string, unknown> | undefined)?.[k];
+  return Number(flat ?? nested ?? 0);
+}
 
-export default function Imovel() {
+export default function ImovelPage() {
   const { id } = useParams();
-  const [item, setItem] = useState<(Imovel & { imagens: Array<{ url: string; legenda: string }> }) | null>(null);
+  const [item, setItem] = useState<(Imovel & { imagens: NormalizedImg[] }) | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFavorited, setIsFavorited] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  // Lightbox / Modal de imagem
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // contato
+  const [imgIdx, setImgIdx] = useState(0);
+  const [modal, setModal] = useState(false);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
   const [mensagem, setMensagem] = useState("");
 
-  // bloquear scroll quando o modal estiver aberto
   useEffect(() => {
-    if (isModalOpen) {
-      const original = document.body.style.overflow;
+    if (modal) {
+      const orig = document.body.style.overflow;
       document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = original;
-      };
+      return () => { document.body.style.overflow = orig; };
     }
-  }, [isModalOpen]);
+  }, [modal]);
 
-  // navegação por teclado dentro do modal
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (!isModalOpen) return;
-      if (e.key === "Escape") setIsModalOpen(false);
-      if (e.key === "ArrowRight") nextImage();
-      if (e.key === "ArrowLeft") prevImage();
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isModalOpen, currentImageIndex, item?.imagens?.length]
-  );
+  const next = useCallback(() => { if (item?.imagens?.length) setImgIdx((p) => (p + 1) % item.imagens.length); }, [item]);
+  const prev = useCallback(() => { if (item?.imagens?.length) setImgIdx((p) => (p - 1 + item.imagens.length) % item.imagens.length); }, [item]);
 
   useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
+    const fn = (e: KeyboardEvent) => {
+      if (!modal) return;
+      if (e.key === "Escape") setModal(false);
+      if (e.key === "ArrowRight") next();
+      if (e.key === "ArrowLeft") prev();
+    };
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, [modal, next, prev]);
 
   useEffect(() => {
     if (!id) return;
-    let cancelled = false;
+    let c = false;
     (async () => {
       setLoading(true);
       try {
         let data: Imovel | null = null;
-        try {
-          data = await ImoveisAPI.get(id);
-        } catch {
-          // Silently fail and try alternative
-        }
-        if (!data) {
-          try {
-            data = await ImoveisAPI.getOne(id);
-          } catch {
-            // Silently fail
-          }
-        }
-
-        const normalized = normalizeImovel(data);
-        if (!cancelled) setItem(normalized);
+        try { data = await ImoveisAPI.get(id); } catch {}
+        if (!data) try { data = await ImoveisAPI.getOne(id); } catch {}
+        if (!c) setItem(normalizeImovel(data));
       } catch {
-        if (!cancelled) setItem(null);
+        if (!c) setItem(null);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!c) setLoading(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { c = true; };
   }, [id]);
 
-  if (!id) {
+  // Loading / error states
+  if (!id || loading || !item) {
+    const title = !id ? "ID não informado" : loading ? "Carregando..." : "Imóvel não encontrado";
+    const desc = !id ? "Não foi possível identificar o imóvel." : loading ? "Aguarde um momento" : "O imóvel não existe ou foi removido.";
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md text-center shadow-xl border-0">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-sm w-full text-center">
           <CardContent className="p-8">
-            <div className="bg-gradient-to-br from-blue-100 to-indigo-200 rounded-full p-6 mx-auto mb-6 w-fit">
-              <Building2 className="h-12 w-12 text-blue-600" />
+            <div className="mx-auto mb-4 h-14 w-14 flex items-center justify-center rounded-2xl bg-secondary">
+              {loading ? (
+                <div className="h-8 w-8 animate-spin rounded-full border-3 border-primary border-r-transparent" />
+              ) : (
+                <Building2 className="h-7 w-7 text-muted-foreground" />
+              )}
             </div>
-            <h2 className="text-2xl font-bold mb-3 text-gray-800">ID não informado</h2>
-            <p className="text-gray-600 mb-6 leading-relaxed">
-              Não foi possível identificar qual imóvel você deseja visualizar.
-            </p>
-            <Button
-              asChild
-              size="lg"
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
-            >
-              <Link to="/">Voltar à busca</Link>
-            </Button>
+            <h2 className="text-xl font-bold mb-2">{title}</h2>
+            <p className="text-muted-foreground mb-6 text-sm">{desc}</p>
+            {!loading && <Button asChild><Link to="/">Voltar à busca</Link></Button>}
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-xl border-0">
-          <CardContent className="p-8 text-center">
-            <div className="relative mx-auto mb-6 w-16 h-16">
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600"></div>
-              <Building2 className="absolute inset-0 m-auto h-6 w-6 text-blue-600" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2 text-gray-800">Carregando detalhes</h3>
-            <p className="text-gray-600">Aguarde um momento...</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const cidade = item.cidade || item.endereco?.cidade || "";
+  const area = getVal(item, "area_m2") || item.area || 0;
+  const quartos = getVal(item, "quartos");
+  const banheiros = getVal(item, "banheiros");
+  const garagem = getVal(item, "garagem");
+  const features = [
+    { icon: Ruler, label: "Área", value: area ? `${area} m²` : null },
+    { icon: Bed, label: "Quartos", value: quartos || null },
+    { icon: Bath, label: "Banheiros", value: banheiros || null },
+    { icon: Car, label: "Vagas", value: garagem || null },
+  ].filter((f) => f.value);
 
-  if (!item) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-wd text-center shadow-xl border-0">
-          <CardContent className="p-8">
-            <div className="bg-gradient-to-br from-red-100 to-orange-200 rounded-full p-6 mx-auto mb-6 w-fit">
-              <Building2 className="h-12 w-12 text-red-600" />
-            </div>
-            <h2 className="text-2xl font-bold mb-3 text-gray-800">Imóvel não encontrado</h2>
-            <p className="text-gray-600 mb-6 leading-relaxed">
-              O imóvel que você procura não existe ou foi removido do nosso catálogo.
-            </p>
-            <Button
-              asChild
-              size="lg"
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
-            >
-              <Link to="/">Voltar à busca</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const formatPrice = (price?: number) =>
-    !price ? "Preço não informado" : `R$ ${price.toLocaleString("pt-BR")}`;
-
-  const handleWhatsAppClick = () => {
-    const text = `Olá, ${CORRETOR.nome}! Tenho interesse no imóvel "${item.titulo}". Gostaria de mais informações.`;
-    window.open(buildWhatsAppLink(text), "_blank");
+  const handleWhatsApp = () => {
+    window.open(whatsLink(`Olá, ${CORRETOR.nome}! Tenho interesse no imóvel "${item.titulo}". Gostaria de mais informações.`), "_blank");
   };
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: item.titulo,
-          text: `Confira este imóvel: ${item.titulo}`,
-          url: window.location.href,
-        });
-      } catch (err) {
-        // User cancelled or share not available
-        console.log('Share cancelled');
-      }
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-    }
-  };
-
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleForm = (e: React.FormEvent) => {
     e.preventDefault();
-    const linhas: string[] = [];
-    linhas.push(`Olá, ${CORRETOR.nome}! 👋`);
-    linhas.push(`Tenho interesse no imóvel: "${item.titulo}".`);
-    if (mensagem.trim()) {
-      linhas.push("", "Mensagem:", mensagem.trim());
-    }
-    linhas.push("", "Meus dados para contato:");
-    if (nome.trim()) linhas.push(`• Nome: ${nome.trim()}`);
-    if (email.trim()) linhas.push(`• E-mail: ${email.trim()}`);
-    if (telefone.trim()) linhas.push(`• Telefone: ${telefone.trim()}`);
-    window.open(buildWhatsAppLink(linhas.join("\n")), "_blank");
-  };
-
-  const propertyFeatures = [
-    { icon: Ruler, label: "Área", value: item.caracteristicas?.area_m2 ? `${item.caracteristicas.area_m2} m²` : null },
-    { icon: Bed, label: "Quartos", value: item.caracteristicas?.quartos || null },
-    { icon: Bath, label: "Banheiros", value: item.caracteristicas?.banheiros || null },
-    { icon: Car, label: "Vagas", value: item.caracteristicas?.garagem || null },
-  ].filter((f) => f.value !== null);
-
-  // ---- Lightbox helpers ----
-  const openModalAt = (idx: number) => {
-    setCurrentImageIndex(idx);
-    setIsModalOpen(true);
-  };
-  const closeModal = () => setIsModalOpen(false);
-  const nextImage = () => {
-    if (!item?.imagens?.length) return;
-    setCurrentImageIndex((prev) => (prev + 1) % item.imagens.length);
-  };
-  const prevImage = () => {
-    if (!item?.imagens?.length) return;
-    setCurrentImageIndex((prev) =>
-      (prev - 1 + item.imagens.length) % item.imagens.length
-    );
+    const lines = [`Olá, ${CORRETOR.nome}! `, `Tenho interesse no imóvel: "${item.titulo}".`];
+    if (mensagem.trim()) lines.push("", "Mensagem:", mensagem.trim());
+    lines.push("", "Dados para contato:");
+    if (nome.trim()) lines.push(` Nome: ${nome.trim()}`);
+    if (email.trim()) lines.push(` E-mail: ${email.trim()}`);
+    if (telefone.trim()) lines.push(` Telefone: ${telefone.trim()}`);
+    window.open(whatsLink(lines.join("\n")), "_blank");
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white/95 backdrop-blur-md border-b border-gray-200 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <div className="bg-card/95 backdrop-blur-sm border-b sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-              className="hover:bg-blue-50 hover:text-blue-700 transition-colors"
-            >
-              <Link to="/">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar à busca
-              </Link>
-            </Button>
+            <Button variant="ghost" size="sm" asChild><Link to="/"><ArrowLeft className="h-4 w-4 mr-1.5" />Voltar</Link></Button>
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsFavorited(!isFavorited)}
-                className={`hover:scale-105 transition-all duration-200 ${
-                  isFavorited
-                    ? "bg-red-50 border-red-200 text-red-600"
-                    : "hover:bg-gray-50"
-                }`}
-              >
-                <Heart
-                  className={`h-4 w-4 mr-2 ${isFavorited ? "fill-current" : ""}`}
-                />
-                {isFavorited ? "Favoritado" : "Favoritar"}
+              <Button variant="outline" size="sm" onClick={() => setIsFavorited(!isFavorited)} className={isFavorited ? "text-red-500 border-red-200 bg-red-50" : ""}>
+                <Heart className={`h-4 w-4 mr-1.5 ${isFavorited ? "fill-current" : ""}`} />{isFavorited ? "Favoritado" : "Favoritar"}
               </Button>
-              <ShareButtons 
-                title={item.titulo}
-                description={`${item.tipo ? item.tipo + ' - ' : ''}${item.cidade}. Preço: R$ ${item.preco.toLocaleString('pt-BR')}`}
-              />
+              <ShareButtons title={item.titulo} description={`${item.tipo ? item.tipo + " - " : ""}${cidade}. ${formatCurrency(item.preco || 0)}`} />
             </div>
           </div>
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Coluna principal */}
-          <div className="lg:col-span-2 space-y-8">
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-              <div className="p-6 pb-0">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h1 className="text-3xl lg:text-4xl font-bold text-gray-800 mb-3 leading-tight">
-                      {item.titulo}
-                    </h1>
-                    <div className="flex items-center gap-3 text-gray-600 mb-4">
-                      <MapPin className="h-5 w-5 text-blue-600" />
-                      <span className="text-lg">{item.cidade}</span>
-                      {item.tipo && (
-                        <>
-                          <span className="text-gray-400">•</span>
-                          <Badge
-                            variant="secondary"
-                            className="bg-blue-100 text-blue-800 px-3 py-1"
-                          >
-                            {item.tipo}
-                          </Badge>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                    {formatPrice(item.preco)}
-                  </div>
-                  {item.area && (
-                    <div className="text-gray-500">
-                      <span className="text-sm">
-                        R$ {((item.preco || 0) / item.area).toFixed(0)}/m²
-                      </span>
-                    </div>
-                  )}
-                </div>
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Main */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Title + Price */}
+            <div className="bg-card rounded-xl border p-5">
+              <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-3">{item.titulo}</h1>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mb-4">
+                <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4 text-primary/70" />{cidade}</span>
+                {item.tipo && <Badge variant="secondary">{item.tipo}</Badge>}
+                {item.finalidade && <Badge variant="outline">{item.finalidade}</Badge>}
               </div>
+              <div className="text-3xl font-bold text-primary">{item.preco ? formatCurrency(item.preco) : "Consulte"}</div>
+              {area > 0 && item.preco && (
+                <p className="text-xs text-muted-foreground mt-1">R$ {Math.round(item.preco / area).toLocaleString("pt-BR")}/m²</p>
+              )}
 
-              {/* Galeria de imagens */}
-              {item.imagens && item.imagens.length > 0 ? (
-                <div className="px-6 pb-6">
-                  {/* Imagem principal */}
-                  <button
-                    type="button"
-                    onClick={() => openModalAt(currentImageIndex)}
-                    className="relative rounded-2xl overflow-hidden w-full block group"
-                    aria-label="Ampliar imagem"
-                  >
-                    <img
-                      src={item.imagens[currentImageIndex]?.url || item.imagens[0]?.url}
-                      alt={item.titulo}
-                      className="w-full h-96 object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent pointer-events-none" />
-                    <div className="absolute top-4 right-4">
-                      <Badge className="bg-black/50 text-white border-0">
-                        <ImageIcon className="h-3 w-3 mr-1" />
-                        {currentImageIndex + 1}/{item.imagens.length}
+              {/* Tags */}
+              {item.tags && item.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-4">
+                  {item.tags.map(tag => {
+                    const cfg = getTagConfig(tag);
+                    return (
+                      <Badge key={tag} variant="secondary" className="text-xs">
+                        {cfg?.icon && <span className="mr-1">{cfg.icon}</span>}
+                        {cfg?.label || tag}
                       </Badge>
-                    </div>
-                    <div className="absolute bottom-3 right-3 text-xs text-white/90 bg-black/40 px-2 py-1 rounded">
-                      Clique para ampliar
-                    </div>
-                  </button>
-
-                  {/* Miniaturas */}
-                  {item.imagens.length > 1 && (
-                    <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
-                      {item.imagens.map((img, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setCurrentImageIndex(idx)}
-                          onDoubleClick={() => openModalAt(idx)}
-                          className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                            idx === currentImageIndex
-                              ? "border-blue-500 scale-105"
-                              : "border-gray-200 hover:border-gray-300"
-                          }`}
-                          title={img.legenda || `Imagem ${idx + 1}`}
-                          aria-label={`Selecionar imagem ${idx + 1}`}
-                        >
-                          <img
-                            src={img.url}
-                            alt={img.legenda || item.titulo}
-                            className="w-full h-full object-cover"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="px-6 pb-6">
-                  <div className="h-48 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400">
-                    <ImageIcon className="h-8 w-8" />
-                    <span className="ml-2">Sem imagens para este imóvel</span>
-                  </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
+            {/* Gallery */}
+            {item.imagens.length > 0 ? (
+              <div className="bg-card rounded-xl border overflow-hidden">
+                <button type="button" onClick={() => { setImgIdx(imgIdx); setModal(true); }} className="relative w-full block group">
+                  <img src={item.imagens[imgIdx]?.url} alt={item.titulo} className="w-full h-80 lg:h-96 object-cover transition-transform group-hover:scale-[1.02]" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                  <Badge className="absolute top-3 right-3 bg-black/50 text-white border-0"><ImageIcon className="h-3 w-3 mr-1" />{imgIdx + 1}/{item.imagens.length}</Badge>
+                </button>
+                {item.imagens.length > 1 && (
+                  <div className="flex gap-1.5 p-3 overflow-x-auto">
+                    {item.imagens.map((img, idx) => (
+                      <button key={idx} onClick={() => setImgIdx(idx)} className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${idx === imgIdx ? "border-primary scale-105" : "border-transparent hover:border-muted-foreground/30"}`}>
+                        <img src={img.url} alt={img.legenda || `Imagem ${idx + 1}`} className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-card rounded-xl border p-8">
+                <div className="h-40 flex items-center justify-center text-muted-foreground/40">
+                  <ImageIcon className="h-10 w-10 mr-2" /><span>Sem imagens</span>
+                </div>
+              </div>
+            )}
+
             {/* Features */}
-            {propertyFeatures.length > 0 && (
-              <Card className="shadow-xl border-0">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2 text-xl">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    Características
-                  </CardTitle>
-                </CardHeader>
+            {features.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><CheckCircle className="h-4 w-4 text-emerald-600" />Características</CardTitle></CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {propertyFeatures.map((feature, index) => {
-                      const Icon = feature.icon;
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {features.map((f, i) => {
+                      const Icon = f.icon;
                       return (
-                        <div key={index} className="group">
-                          <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 hover:from-blue-100 hover:to-indigo-100 transition-all duration-300 hover:scale-105">
-                            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full p-3 mb-3 group-hover:scale-110 transition-transform duration-300">
-                              <Icon className="h-6 w-6 text-white" />
-                            </div>
-                            <span className="font-bold text-xl text-gray-800 mb-1">
-                              {feature.value}
-                            </span>
-                            <span className="text-sm text-gray-600 font-medium">
-                              {feature.label}
-                            </span>
-                          </div>
+                        <div key={i} className="flex flex-col items-center text-center p-4 rounded-xl bg-secondary/50 border">
+                          <div className="bg-primary rounded-full p-2.5 mb-2"><Icon className="h-5 w-5 text-primary-foreground" /></div>
+                          <span className="font-bold text-lg">{f.value}</span>
+                          <span className="text-xs text-muted-foreground">{f.label}</span>
                         </div>
                       );
                     })}
@@ -456,181 +243,49 @@ export default function Imovel() {
               </Card>
             )}
 
-            {/* Descrição */}
+            {/* Description */}
             {item.descricao && (
-              <Card className="shadow-xl border-0">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-xl">
-                    <Eye className="h-5 w-5 text-blue-600" />
-                    Descrição
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="prose prose-gray max-w-none">
-                    <p className="text-gray-700 leading-relaxed text-lg whitespace-pre-wrap">
-                      {item.descricao}
-                    </p>
-                  </div>
-                </CardContent>
+              <Card>
+                <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Eye className="h-4 w-4 text-primary" />Descrição</CardTitle></CardHeader>
+                <CardContent><p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{item.descricao}</p></CardContent>
               </Card>
             )}
           </div>
 
-          {/* Sidebar (contato, preço etc.) */}
-          <div className="space-y-6">
-            <Card className="shadow-xl border-0">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-blue-800">WhatsApp / Telefone</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-emerald-50 flex items-center justify-center">
-                    <Phone className="h-5 w-5 text-emerald-600" />
-                  </div>
-                  <div className="font-medium text-gray-700">{CORRETOR.telefoneDisplay}</div>
+          {/* Sidebar */}
+          <div className="space-y-4">
+            <Card>
+              <CardHeader className="pb-3"><CardTitle className="text-sm">Contato</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-9 w-9 rounded-full bg-emerald-50 flex items-center justify-center"><Phone className="h-4 w-4 text-emerald-600" /></div>
+                  <span className="font-medium text-sm">{CORRETOR.telefoneDisplay}</span>
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={handleWhatsAppClick} className="bg-emerald-600 hover:bg-emerald-700">
-                    WhatsApp
-                  </Button>
-                  <a href={buildTelLink()} className="inline-block">
-                    <Button variant="outline">Ligar</Button>
-                  </a>
+                  <Button onClick={handleWhatsApp} size="sm" className="bg-emerald-600 hover:bg-emerald-700 flex-1">WhatsApp</Button>
+                  <a href={telLink()}><Button variant="outline" size="sm">Ligar</Button></a>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="shadow-xl border-0">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-blue-800">E-mail</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center">
-                    <Mail className="h-5 w-5 text-indigo-600" />
-                  </div>
-                  <div className="text-gray-700">{CORRETOR.email}</div>
-                </div>
-                <a href={`mailto:${CORRETOR.email}`} className="inline-block">
-                  <Button>Enviar E-mail</Button>
-                </a>
+            <Card>
+              <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Star className="h-4 w-4 text-amber-500" />Info. Rápidas</CardTitle></CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex justify-between items-center p-2.5 bg-secondary/50 rounded-lg text-sm"><span className="text-muted-foreground">Tipo</span><Badge variant="secondary">{item.tipo || "N/I"}</Badge></div>
+                <div className="flex justify-between items-center p-2.5 bg-secondary/50 rounded-lg text-sm"><span className="text-muted-foreground">Cidade</span><span className="font-medium">{cidade || "N/I"}</span></div>
+                {area > 0 && <div className="flex justify-between items-center p-2.5 bg-secondary/50 rounded-lg text-sm"><span className="text-muted-foreground">Área</span><span className="font-medium">{area} m²</span></div>}
               </CardContent>
             </Card>
 
-            <Card className="shadow-xl border-0">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-green-600" />
-                  Valor do Imóvel
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="text-center">
-                  <div className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
-                    {formatPrice(item.preco)}
-                  </div>
-                  {item.area && (
-                    <p className="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-full inline-block">
-                      R$ {((item.preco || 0) / item.area).toFixed(0)}/m²
-                    </p>
-                  )}
-                </div>
-                <Separator />
-                <div className="space-y-3">
-                  <Button className="w-full" size="lg" onClick={handleWhatsAppClick}>
-                    <MessageCircle className="mr-2 h-5 w-5" />
-                    WhatsApp
-                  </Button>
-                  <a href={buildTelLink()} className="block">
-                    <Button variant="outline" className="w-full" size="lg">
-                      <Phone className="mr-2 h-4 w-4" />
-                      Ligar Agora ({CORRETOR.telefoneDisplay})
-                    </Button>
-                  </a>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-xl border-0">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Star className="h-5 w-5 text-amber-500" />
-                  Informações Rápidas
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="text-gray-600 font-medium">Tipo:</span>
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                    {item.tipo || "Não informado"}
-                  </Badge>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="text-gray-600 font-medium">Cidade:</span>
-                  <span className="font-semibold text-gray-800">{item.cidade}</span>
-                </div>
-                {item.area && (
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span className="text-gray-600 font-medium">Área:</span>
-                    <span className="font-semibold text-gray-800">{item.area} m²</span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Form de contato → WhatsApp */}
-            <Card className="shadow-xl border-0">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5 text-emerald-600" />
-                  Entre em contato
-                </CardTitle>
-              </CardHeader>
+            <Card>
+              <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><MessageCircle className="h-4 w-4 text-emerald-600" />Mensagem</CardTitle></CardHeader>
               <CardContent>
-                <form onSubmit={handleFormSubmit} className="space-y-4">
-                  <div className="grid gap-2">
-                    <label className="text-sm text-gray-700">Nome</label>
-                    <input
-                      className="h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
-                      value={nome}
-                      onChange={(e) => setNome(e.target.value)}
-                      placeholder="Seu nome completo"
-                      required
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <label className="text-sm text-gray-700">E-mail</label>
-                    <input
-                      type="email"
-                      className="h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="voce@exemplo.com"
-                      required
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <label className="text-sm text-gray-700">Telefone / WhatsApp</label>
-                    <input
-                      className="h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
-                      value={telefone}
-                      onChange={(e) => setTelefone(e.target.value)}
-                      placeholder={CORRETOR.telefoneDisplay}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <label className="text-sm text-gray-700">Mensagem</label>
-                    <textarea
-                      className="min-h-[120px] rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
-                      value={mensagem}
-                      onChange={(e) => setMensagem(e.target.value)}
-                      placeholder={`Olá! Tenho interesse no imóvel "${item.titulo}".`}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full">
-                    <MessageCircle className="mr-2 h-5 w-5" />
-                    Enviar mensagem pelo WhatsApp
-                  </Button>
+                <form onSubmit={handleForm} className="space-y-3">
+                  <Input placeholder="Seu nome" value={nome} onChange={e => setNome(e.target.value)} required className="h-9 text-sm" />
+                  <Input type="email" placeholder="E-mail" value={email} onChange={e => setEmail(e.target.value)} required className="h-9 text-sm" />
+                  <Input placeholder="Telefone" value={telefone} onChange={e => setTelefone(e.target.value)} className="h-9 text-sm" />
+                  <Textarea placeholder={`Tenho interesse no imóvel "${item.titulo}".`} value={mensagem} onChange={e => setMensagem(e.target.value)} rows={3} className="text-sm" />
+                  <Button type="submit" className="w-full" size="sm"><MessageCircle className="mr-1.5 h-4 w-4" />Enviar via WhatsApp</Button>
                 </form>
               </CardContent>
             </Card>
@@ -638,73 +293,20 @@ export default function Imovel() {
         </div>
       </main>
 
-      {/* ---- MODAL / LIGHTBOX ---- */}
-      {isModalOpen && item.imagens && item.imagens.length > 0 && (
-        <div
-          className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center"
-          onClick={closeModal}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Visualização da imagem"
-        >
-          {/* Botão fechar */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              closeModal();
-            }}
-            className="absolute top-5 right-5 text-white/90 hover:text-white p-2"
-            aria-label="Fechar"
-            title="Fechar (Esc)"
-          >
-            <X className="w-7 h-7" />
-          </button>
-
-          {/* Botões navegação */}
+      {/* Lightbox */}
+      {modal && item.imagens.length > 0 && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center" onClick={() => setModal(false)}>
+          <button onClick={e => { e.stopPropagation(); setModal(false); }} className="absolute top-4 right-4 text-white/80 hover:text-white p-2"><X className="w-6 h-6" /></button>
           {item.imagens.length > 1 && (
             <>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  prevImage();
-                }}
-                className="absolute left-3 md:left-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"
-                aria-label="Imagem anterior"
-                title="Anterior (←)"
-              >
-                <ChevronLeft className="w-7 h-7" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  nextImage();
-                }}
-                className="absolute right-3 md:right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"
-                aria-label="Próxima imagem"
-                title="Próxima (→)"
-              >
-                <ChevronRight className="w-7 h-7" />
-              </button>
+              <button onClick={e => { e.stopPropagation(); prev(); }} className="absolute left-3 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"><ChevronLeft className="w-6 h-6" /></button>
+              <button onClick={e => { e.stopPropagation(); next(); }} className="absolute right-3 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"><ChevronRight className="w-6 h-6" /></button>
             </>
           )}
-
-          {/* Container da imagem (impede fechar ao clicar na imagem) */}
-          <div
-            className="max-w-[95vw] max-h-[92vh] flex items-center justify-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <img
-              src={item.imagens[currentImageIndex]?.url}
-              alt={item.imagens[currentImageIndex]?.legenda || item.titulo}
-              className="object-contain max-w-[95vw] max-h-[92vh] rounded-lg shadow-2xl"
-              draggable={false}
-            />
+          <div className="max-w-[95vw] max-h-[92vh]" onClick={e => e.stopPropagation()}>
+            <img src={item.imagens[imgIdx]?.url} alt={item.titulo} className="object-contain max-w-[95vw] max-h-[92vh] rounded-lg" draggable={false} />
           </div>
-
-          {/* Contador */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/90 text-sm bg-white/10 px-3 py-1 rounded-full">
-            {currentImageIndex + 1} / {item.imagens.length}
-          </div>
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/80 text-sm bg-white/10 px-3 py-1 rounded-full">{imgIdx + 1} / {item.imagens.length}</div>
         </div>
       )}
     </div>
